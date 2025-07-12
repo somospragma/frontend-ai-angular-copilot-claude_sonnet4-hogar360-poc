@@ -13,146 +13,149 @@ interface Category {
   selector: 'app-categorias',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  template: `
-    <div class="min-h-screen bg-gray-50">
-      <nav class="bg-white border-b border-gray-200 h-14">
-        <div class="max-w-full px-3">
-          <div class="flex justify-between items-center h-12 mx-3 my-3">
-            <div class="flex items-center">
-              <div class="text-xs font-normal text-black leading-[20px] ml-2.5">
-                Hogar 360
-              </div>
-            </div>
-            <div class="flex items-center space-x-3">
-              <span class="text-base font-normal text-gray-600">Bienvenido, Admin</span>
-              <img src="/assets/images/avatar.jpg" alt="Avatar" class="w-8 h-8 rounded-full">
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div class="flex">
-        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
-          <div class="p-0">
-            <div class="mt-5 mx-3">
-              <div class="space-y-1">
-                <div class="flex items-center px-2 py-2 text-sm font-normal text-gray-600 rounded-md">
-                  <img src="/assets/images/dashboard-icon.svg" alt="Dashboard" class="mr-3 w-3.5 h-3.5">
-                  Dashboard
-                </div>
-                <div class="flex items-center px-2 py-2 text-sm font-normal text-blue-600 bg-blue-50 rounded-md">
-                  <img src="/assets/images/categories-icon.svg" alt="Categorías" class="mr-3 w-3.5 h-3.5">
-                  Categorías
-                </div>
-                <div class="flex items-center px-2 py-2 text-sm font-normal text-gray-600 rounded-md">
-                  <img src="/assets/images/properties-icon.svg" alt="Propiedades" class="mr-3 w-4 h-3.5">
-                  Propiedades
-                </div>
-                <div class="flex items-center px-2 py-2 text-sm font-normal text-gray-600 rounded-md">
-                  <img src="/assets/images/users-icon.svg" alt="Usuarios" class="mr-3 w-4 h-3.5">
-                  Usuarios
-                </div>
-                <div class="flex items-center px-2 py-2 text-sm font-normal text-gray-600 rounded-md">
-                  <img src="/assets/images/settings-icon.svg" alt="Configuración" class="mr-3 w-3.5 h-3.5">
-                  Configuración
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        <main class="flex-1 p-16">
-          <div class="max-w-7xl">
+  template: `    <!-- Contenido específico de categorías - sin layout duplicado -->
+    <div class="categorias-content">
+      <!-- Formulario de crear categoría -->
+      <div class="mb-8">
+        <h1 class="text-2xl font-semibold text-gray-900 mb-6">Crear Categoría</h1>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
             <div class="mb-6">
-              <h1 class="text-2xl font-normal text-gray-900 mb-16 leading-8">Crear Categoría</h1>
-              <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-16">
-                <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
-                  <div class="mb-7">
-                    <label class="block text-sm font-normal text-gray-700 mb-2">
-                      Nombre de la Categoría
-                      <span class="text-red-500 text-sm font-normal">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      formControlName="name"
-                      placeholder="Escribe el nombre de la categoría (máximo 50 caracteres)"
-                      class="w-full px-2.5 py-2.5 text-sm font-normal text-gray-600 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
-                      maxlength="50">
-                  </div>
-                  <div class="mb-10">
-                    <label class="block text-sm font-normal text-gray-700 mb-2">
-                      Descripción
-                      <span class="text-red-500 text-sm font-normal">*</span>
-                    </label>
-                    <div class="relative">
-                      <textarea
-                        formControlName="description"
-                        placeholder="Enter category description"
-                        rows="7"
-                        maxlength="90"
-                        class="w-full px-4 py-2 text-base font-normal text-gray-600 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 resize-none"
-                        (input)="updateCharCount()"></textarea>
-                    </div>
-                    <div class="flex justify-end mt-1 text-sm font-normal text-gray-600">
-                      <span>{{ characterCount() }}</span>
-                      <span class="font-normal">/90</span>
-                    </div>
-                  </div>
-                  <div class="flex justify-end">
-                    <button
-                      type="submit"
-                      [disabled]="!categoryForm.valid"
-                      class="px-4 py-2.5 bg-blue-600 text-white text-sm font-normal rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed min-w-[142px]">
-                      Crear
-                    </button>
-                  </div>
-                </form>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Nombre de la Categoría
+                <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                formControlName="name"
+                placeholder="Escribe el nombre de la categoría (máximo 50 caracteres)"
+                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-400"
+                maxlength="50">
+            </div>
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Descripción
+                <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <textarea
+                  formControlName="description"
+                  placeholder="Describe la categoría..."
+                  rows="4"
+                  maxlength="90"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-400 resize-none"
+                  (input)="updateCharCount()"></textarea>
+              </div>
+              <div class="flex justify-end mt-1 text-sm text-gray-500">
+                <span>{{ characterCount() }}</span>
+                <span>/90</span>
               </div>
             </div>
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                [disabled]="!categoryForm.valid"
+                class="px-6 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                Crear Categoría
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
 
-            <div>
-              <h2 class="text-lg font-medium text-gray-900 mb-8">Categorías existentes</h2>
-              <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <table class="min-w-full">
-                  <thead class="bg-gray-50">
-                    <tr>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">ID</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
-                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    @for (category of categories; track category.id) {
-                      <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-normal text-gray-600">{{ category.id }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-normal text-gray-900">{{ category.name }}</td>
-                        <td class="px-6 py-4 text-sm font-normal text-gray-600">{{ category.description }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button class="text-red-600 hover:text-red-900">
-                            <img src="/assets/images/edit-icon.svg" alt="Edit" class="w-3 h-3.5">
-                          </button>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-              <nav class="flex justify-center mt-6 space-x-2">
-                <button class="px-4 py-2.5 bg-blue-600 text-white text-base font-normal rounded-lg">1</button>
-                <button class="px-4 py-2.5 bg-white border border-gray-200 text-black text-base font-normal rounded-lg hover:bg-gray-50">2</button>
-                <button class="px-4 py-2.5 bg-white border border-gray-200 text-black text-base font-normal rounded-lg hover:bg-gray-50">3</button>
-                <button class="px-4 py-2.5 bg-white border border-gray-200 text-black text-base font-normal rounded-lg hover:bg-gray-50">4</button>
-                <button class="px-4 py-2.5 bg-white border border-gray-200 text-gray-600 text-base font-normal rounded-lg hover:bg-gray-50">
-                  <img src="/assets/images/next-arrow.svg" alt="Next" class="w-2.5 h-4">
-                </button>
-              </nav>
-            </div>
-          </div>
-        </main>
+      <!-- Lista de categorías existentes -->
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">Categorías Existentes</h2>        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <table class="min-w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              @for (category of categories; track category.id) {
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ category.id }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ category.name }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-600">{{ category.description }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button class="text-primary-600 hover:text-primary-700 mr-4" title="Editar">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button class="text-red-600 hover:text-red-700" title="Eliminar">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <polyline points="3,6 5,6 21,6"/>
+                        <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Paginación -->
+        <nav class="flex justify-center mt-6 space-x-2">
+          <button class="px-3 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg">1</button>
+          <button class="px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">2</button>
+          <button class="px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">3</button>
+          <button class="px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">4</button>
+          <button class="px-3 py-2 bg-white border border-gray-300 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <polyline points="9,18 15,12 9,6"/>
+            </svg>
+          </button>
+        </nav>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .categorias-content {
+      @apply max-w-6xl mx-auto;
+    }
+
+    /* Form styles */
+    .form-section {
+      @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    }
+
+    /* Table styles */
+    .table-container {
+      @apply bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden;
+    }
+
+    /* Custom button styles */
+    .btn-primary {
+      @apply px-6 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    }
+
+    .btn-secondary {
+      @apply px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors;
+    }
+
+    /* Action buttons */
+    .action-btn {
+      @apply p-1 rounded hover:bg-gray-100 transition-colors;
+    }
+
+    /* Input styles */
+    .form-input {
+      @apply w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-400 transition-colors;
+    }
+
+    .form-textarea {
+      @apply w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-400 resize-none transition-colors;
+    }
+  `]
 })
 export class CategoriasComponent {
   private readonly fb = inject(FormBuilder);

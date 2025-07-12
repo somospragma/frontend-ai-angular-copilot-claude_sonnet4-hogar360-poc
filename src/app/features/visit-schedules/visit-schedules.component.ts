@@ -184,31 +184,31 @@ import { Property } from '../../core/interfaces/property.interface';
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div class="text-sm font-medium text-secondary-900">
-                          {{ schedule.fecha_hora_inicio | date:'dd/MM/yyyy' }}
+                          {{ schedule.fechaHoraInicio | date:'dd/MM/yyyy' }}
                         </div>
                         <div class="text-sm text-secondary-700">
-                          {{ schedule.fecha_hora_inicio | date:'HH:mm' }} - {{ schedule.fecha_hora_fin | date:'HH:mm' }}
+                          {{ schedule.fechaHoraInicio | date:'HH:mm' }} - {{ schedule.fechaHoraFin | date:'HH:mm' }}
                         </div>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-700">
-                      {{ getDuration(schedule.fecha_hora_inicio, schedule.fecha_hora_fin) }}
+                      {{ getDuration(schedule.fechaHoraInicio, schedule.fechaHoraFin) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="text-sm text-secondary-900">
-                        {{ schedule.visitas_agendadas.length }}/2
+                        {{ (schedule.visitasAgendadas?.length || 0) }}/2
                       </div>
-                      @if (schedule.visitas_agendadas.length > 0) {
+                      @if (schedule.visitasAgendadas && schedule.visitasAgendadas.length > 0) {
                         <div class="text-xs text-secondary-600">
-                          @for (visit of schedule.visitas_agendadas; track visit.id) {
-                            <div>{{ visit.comprador_email }}</div>
+                          @for (visit of schedule.visitasAgendadas; track visit.id) {
+                            <div>{{ visit.compradorEmail }}</div>
                           }
                         </div>
                       }
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <span [class]="getAvailabilityClass(schedule.visitas_agendadas.length)" class="px-2 py-1 text-xs font-medium rounded-full">
-                        {{ getAvailabilityText(schedule.visitas_agendadas.length) }}
+                      <span [class]="getAvailabilityClass(schedule.visitasAgendadas?.length || 0)" class="px-2 py-1 text-xs font-medium rounded-full">
+                        {{ getAvailabilityText(schedule.visitasAgendadas?.length || 0) }}
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -308,8 +308,8 @@ export class VisitSchedulesComponent implements OnInit {
         return false; // Skip current schedule when editing
       }
       
-      const scheduleInicio = new Date(schedule.fecha_hora_inicio);
-      const scheduleFin = new Date(schedule.fecha_hora_fin);
+      const scheduleInicio = new Date(schedule.fechaHoraInicio);
+      const scheduleFin = new Date(schedule.fechaHoraFin);
       
       return (inicioDate < scheduleFin && finDate > scheduleInicio);
     });
@@ -334,19 +334,21 @@ export class VisitSchedulesComponent implements OnInit {
       this.isSubmitting.set(true);
       
       const formData = this.scheduleForm.value as VisitScheduleRequest;
-      formData.vendedor_id = 1; // Current vendor ID
+      formData.vendedorId = 1; // Current vendor ID
       
       // Simulate API call
       setTimeout(() => {
-        const property = this.myProperties().find(p => p.id === formData.casa_id)!;
+        const property = this.myProperties().find(p => p.id === formData.casaId)!;
         const newSchedule: VisitSchedule = {
           id: Date.now(),
-          ...formData,
+          vendedorId: formData.vendedorId,
+          casaId: formData.casaId,
+          fechaHoraInicio: formData.fechaHoraInicio,
+          fechaHoraFin: formData.fechaHoraFin,
+          espaciosDisponibles: 2,
           vendedor: { id: 1, nombre: 'Vendedor Actual' } as any,
           casa: property,
-          visitas_agendadas: [],
-          fecha_hora_inicio: new Date(formData.fecha_hora_inicio),
-          fecha_hora_fin: new Date(formData.fecha_hora_fin)
+          visitasAgendadas: []
         };
         
         if (this.editingSchedule()) {
@@ -371,8 +373,8 @@ export class VisitSchedulesComponent implements OnInit {
     this.editingSchedule.set(schedule);
     this.scheduleForm.patchValue({
       casa_id: schedule.casa.id,
-      fecha_hora_inicio: schedule.fecha_hora_inicio.toISOString().slice(0, 16),
-      fecha_hora_fin: schedule.fecha_hora_fin.toISOString().slice(0, 16)
+      fecha_hora_inicio: new Date(schedule.fechaHoraInicio).toISOString().slice(0, 16),
+      fecha_hora_fin: new Date(schedule.fechaHoraFin).toISOString().slice(0, 16)
     });
     this.showForm.set(true);
   }
@@ -384,7 +386,7 @@ export class VisitSchedulesComponent implements OnInit {
     }
   }
 
-  getDuration(inicio: Date, fin: Date): string {
+  getDuration(inicio: string, fin: string): string {
     const diff = new Date(fin).getTime() - new Date(inicio).getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));

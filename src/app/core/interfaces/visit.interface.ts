@@ -3,36 +3,40 @@ import { User } from './user.interface';
 
 export interface VisitSchedule {
   id: number;
-  vendedor_id: number;
-  casa_id: number;
-  fecha_hora_inicio: Date;
-  fecha_hora_fin: Date;
+  vendedorId: number;
+  casaId: number;
+  fechaHoraInicio: string;
+  fechaHoraFin: string;
+  espaciosDisponibles: number;
   vendedor: User;
   casa: Property;
-  visitas_agendadas: ScheduledVisit[];
-  created_at?: Date;
-  updated_at?: Date;
+  visitasAgendadas?: Visit[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface ScheduledVisit {
+export interface Visit {
   id: number;
-  horario_disponible_id: number;
-  comprador_email: string;
-  horario_disponible: VisitSchedule;
-  created_at?: Date;
-  updated_at?: Date;
+  horarioDisponibleId: number;
+  compradorEmail: string;
+  estado: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA';
+  comentarios?: string;
+  horarioDisponible: VisitSchedule;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface VisitScheduleRequest {
-  vendedor_id: number;
-  casa_id: number;
-  fecha_hora_inicio: Date;
-  fecha_hora_fin: Date;
+  vendedorId: number;
+  casaId: number;
+  fechaHoraInicio: string;
+  fechaHoraFin: string;
 }
 
-export interface ScheduledVisitRequest {
-  horario_disponible_id: number;
-  comprador_email: string;
+export interface VisitRequest {
+  horarioDisponibleId: number;
+  compradorEmail: string;
+  comentarios?: string;
 }
 
 export interface VisitScheduleResponse {
@@ -43,10 +47,10 @@ export interface VisitScheduleResponse {
 }
 
 export interface VisitScheduleSearchParams {
-  fecha_inicio?: Date;
-  fecha_fin?: Date;
-  ubicacion_id?: number;
-  available_only?: boolean;
+  fechaInicio?: string;
+  fechaFin?: string;
+  ubicacionId?: number;
+  availableOnly?: boolean;
   page?: number;
   limit?: number;
 }

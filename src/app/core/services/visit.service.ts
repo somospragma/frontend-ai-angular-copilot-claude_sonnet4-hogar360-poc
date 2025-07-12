@@ -5,9 +5,9 @@ import { Observable } from 'rxjs';
 import { API_ENDPOINTS } from '../constants/api.constants';
 import { 
   VisitSchedule,
-  ScheduledVisit,
+  Visit,
   VisitScheduleRequest,
-  ScheduledVisitRequest,
+  VisitRequest,
   VisitScheduleResponse,
   VisitScheduleSearchParams
 } from '../interfaces/visit.interface';
@@ -20,7 +20,7 @@ export class VisitService {
   
   // Signals para el estado reactivo
   readonly visitSchedules = signal<VisitSchedule[]>([]);
-  readonly scheduledVisits = signal<ScheduledVisit[]>([]);
+  readonly visits = signal<Visit[]>([]);
   readonly loading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
 
@@ -39,53 +39,60 @@ export class VisitService {
    * HU #10: Listar horarios disponibles (todos los roles)
    * Obtiene horarios disponibles con filtros
    */
-  getAvailableSchedules(filters: VisitScheduleSearchParams = {}): Observable<VisitScheduleResponse> {
+  getAvailableSchedules(filters: VisitScheduleSearchParams = {}): Observable<VisitSchedule[]> {
     this.loading.set(true);
     this.error.set(null);
 
     let params = new HttpParams();
     
-    if (filters.fecha_inicio) params = params.set('fecha_inicio', filters.fecha_inicio.toISOString());
-    if (filters.fecha_fin) params = params.set('fecha_fin', filters.fecha_fin.toISOString());
-    if (filters.ubicacion_id) params = params.set('ubicacion_id', filters.ubicacion_id.toString());
-    if (filters.available_only) params = params.set('available_only', filters.available_only.toString());
+    if (filters.fechaInicio) params = params.set('fechaInicio', filters.fechaInicio);
+    if (filters.fechaFin) params = params.set('fechaFin', filters.fechaFin);
+    if (filters.ubicacionId) params = params.set('ubicacionId', filters.ubicacionId.toString());
+    if (filters.availableOnly) params = params.set('availableOnly', filters.availableOnly.toString());
     if (filters.page) params = params.set('page', filters.page.toString());
     if (filters.limit) params = params.set('limit', filters.limit.toString());
 
-    return this.http.get<VisitScheduleResponse>(`${API_ENDPOINTS.VISIT_SCHEDULES}`, { params });
+    return this.http.get<VisitSchedule[]>(`${API_ENDPOINTS.VISIT_SCHEDULES}`, { params });
+  }
+
+  /**
+   * Obtener un horario específico por ID
+   */
+  getScheduleById(id: number): Observable<VisitSchedule> {
+    return this.http.get<VisitSchedule>(`${API_ENDPOINTS.VISIT_SCHEDULES}/${id}`);
   }
 
   /**
    * HU #11: Agendar visitas (comprador)
    * Agenda una visita en un horario disponible
    */
-  scheduleVisit(visit: ScheduledVisitRequest): Observable<ScheduledVisit> {
+  scheduleVisit(visit: VisitRequest): Observable<Visit> {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.post<ScheduledVisit>(`${API_ENDPOINTS.SCHEDULED_VISITS}`, visit);
+    return this.http.post<Visit>(`${API_ENDPOINTS.SCHEDULED_VISITS}`, visit);
   }
 
   /**
    * Obtener horarios del vendedor actual
    */
-  getVendorSchedules(vendorId: number): Observable<VisitScheduleResponse> {
+  getVendorSchedules(vendorId: number): Observable<VisitSchedule[]> {
     this.loading.set(true);
     this.error.set(null);
 
-    const params = new HttpParams().set('vendedor_id', vendorId.toString());
-    return this.http.get<VisitScheduleResponse>(`${API_ENDPOINTS.VISIT_SCHEDULES}`, { params });
+    const params = new HttpParams().set('vendedorId', vendorId.toString());
+    return this.http.get<VisitSchedule[]>(`${API_ENDPOINTS.VISIT_SCHEDULES}`, { params });
   }
 
   /**
    * Obtener visitas agendadas del comprador
    */
-  getBuyerVisits(email: string): Observable<ScheduledVisit[]> {
+  getUserVisits(email: string): Observable<Visit[]> {
     this.loading.set(true);
     this.error.set(null);
 
-    const params = new HttpParams().set('comprador_email', email);
-    return this.http.get<ScheduledVisit[]>(`${API_ENDPOINTS.SCHEDULED_VISITS}`, { params });
+    const params = new HttpParams().set('compradorEmail', email);
+    return this.http.get<Visit[]>(`${API_ENDPOINTS.SCHEDULED_VISITS}`, { params });
   }
 
   /**
@@ -111,11 +118,11 @@ export class VisitService {
   /**
    * Cancelar visita agendada
    */
-  cancelScheduledVisit(id: number): Observable<void> {
+  cancelVisit(id: number): Observable<void> {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.delete<void>(`${API_ENDPOINTS.SCHEDULED_VISITS}/${id}`);
+    return this.http.patch<void>(`${API_ENDPOINTS.SCHEDULED_VISITS}/${id}/cancel`, {});
   }
 
   /**
@@ -128,8 +135,8 @@ export class VisitService {
   /**
    * Actualiza el estado local de visitas agendadas
    */
-  setScheduledVisits(visits: ScheduledVisit[]): void {
-    this.scheduledVisits.set(visits);
+  setVisits(visits: Visit[]): void {
+    this.visits.set(visits);
   }
 
   /**

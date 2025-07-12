@@ -5,7 +5,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { PropertyService } from '../../core/services/property.service';
 import { CategoriaService } from '../../core/services/categoria.service';
 import { UbicacionService } from '../../core/services/ubicacion.service';
-import { Property, PropertySearchParams } from '../../core/interfaces/property.interface';
+import { Property } from '../../core/interfaces/property.interface';
 import { Categoria } from '../../core/interfaces/categoria.interface';
 import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
 
@@ -241,7 +241,7 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
               </button>
               
               @for (page of getVisiblePages(); track page) {
-                @if (typeof page === 'number') {
+                @if (isNumber(page)) {
                   <button 
                     (click)="goToPage(page)"
                     [class]="page === currentPage() ? 'bg-primary-600 text-white' : 'bg-white text-secondary-700 border border-secondary-300 hover:bg-secondary-50'"
@@ -584,5 +584,9 @@ export class PropertyListingComponent implements OnInit {
       default:
         return status;
     }
+  }
+
+  isNumber(value: any): boolean {
+    return typeof value === 'number';
   }
 }

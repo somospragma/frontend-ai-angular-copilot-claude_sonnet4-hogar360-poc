@@ -23,7 +23,7 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
             <h3 class="nav-title">Principal</h3>
             <ul class="nav-list">
               <li>
-                <a href="#" class="nav-item active">
+                <a class="nav-item active" (click)="stayOnDashboard($event)">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="3" y="4" width="6" height="7" rx="1"/>
                     <rect x="13" y="4" width="6" height="7" rx="1"/>
@@ -34,7 +34,7 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
                 </a>
               </li>
               <li>
-                <a href="#" class="nav-item" (click)="navigateToCategories()">
+                <a class="nav-item" (click)="navigateToCategories($event)">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="3" y="4" width="6" height="6" rx="1"/>
                     <rect x="11" y="4" width="6" height="6" rx="1"/>
@@ -45,7 +45,7 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
                 </a>
               </li>
               <li>
-                <a href="#" class="nav-item" (click)="navigateToUbicaciones()">
+                <a class="nav-item" (click)="navigateToUbicaciones($event)">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                     <circle cx="12" cy="10" r="3"/>
@@ -54,7 +54,7 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
                 </a>
               </li>
               <li>
-                <a href="#" class="nav-item" (click)="navigateToUsuariosVendedores()">
+                <a class="nav-item" (click)="navigateToUsuariosVendedores($event)">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
@@ -63,7 +63,7 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
                 </a>
               </li>
               <li>
-                <a href="#" class="nav-item">
+                <a class="nav-item" (click)="navigateToProperties($event)">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M21 8.5l-7 7-4.5-4.5L7 13.5l2.5 2.5L14 8z"/>
                     <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -78,7 +78,7 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
             <h3 class="nav-title">Configuración</h3>
             <ul class="nav-list">
               <li>
-                <a href="#" class="nav-item">
+                <a class="nav-item" (click)="navigateToSettings($event)">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -263,7 +263,7 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
     }
 
     .nav-item {
-      @apply flex items-center gap-3 px-3 py-2 rounded-lg text-primary-100 hover:bg-primary-500 transition-colors;
+      @apply flex items-center gap-3 px-3 py-2 rounded-lg text-primary-100 hover:bg-primary-500 transition-colors cursor-pointer;
     }
 
     .nav-item.active {
@@ -427,16 +427,34 @@ export class DashboardComponent implements OnInit {
       .slice(0, 2);
   }
 
-  navigateToCategories(): void {
+  navigateToCategories(event?: Event): void {
+    event?.preventDefault();
     this.router.navigate(['/admin/categorias']);
   }
 
-  navigateToUbicaciones(): void {
+  navigateToUbicaciones(event?: Event): void {
+    event?.preventDefault();
     this.router.navigate(['/admin/ubicaciones']);
   }
 
-  navigateToUsuariosVendedores(): void {
+  navigateToUsuariosVendedores(event?: Event): void {
+    event?.preventDefault();
     this.router.navigate(['/admin/usuarios-vendedores']);
+  }
+
+  stayOnDashboard(event?: Event): void {
+    event?.preventDefault();
+    // Ya estamos en el dashboard, no necesitamos navegar
+  }
+
+  navigateToProperties(event?: Event): void {
+    event?.preventDefault();
+    this.router.navigate(['/admin/propiedades']);
+  }
+
+  navigateToSettings(event?: Event): void {
+    event?.preventDefault();
+    this.router.navigate(['/admin/configuracion']);
   }
 
   logout(): void {

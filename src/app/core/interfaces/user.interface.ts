@@ -7,6 +7,7 @@ export interface User {
   fecha_nacimiento: Date;
   correo: string;
   role: UserRole;
+  avatar?: string;
   created_at?: Date;
   updated_at?: Date;
 }

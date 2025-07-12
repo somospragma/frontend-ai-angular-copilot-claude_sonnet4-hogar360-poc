@@ -3,20 +3,21 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
-  PROPERTIES: '/properties',
-  PROPERTY_DETAIL: '/properties/:id',
+  LANDING: '/landing',
+  PROPERTIES: '/propiedades',
+  PROPERTY_DETAIL: '/propiedades/:id',
+  VISIT_SCHEDULES: '/horarios-disponibles',
   
   // Protected routes
   DASHBOARD: '/dashboard',
-  MY_PROPERTIES: '/my-properties',
-  CREATE_PROPERTY: '/create-property',
-  EDIT_PROPERTY: '/edit-property/:id',
   
   // Admin routes
   ADMIN_DASHBOARD: '/admin/dashboard',
   ADMIN_CATEGORIES: '/admin/categorias',
   ADMIN_LOCATIONS: '/admin/ubicaciones',
   ADMIN_USERS: '/admin/usuarios-vendedores',
+  ADMIN_PROPERTIES: '/admin/propiedades',
+  ADMIN_SETTINGS: '/admin/configuracion',
   
   // Seller routes
   SELLER_DASHBOARD: '/vendedor/dashboard',
@@ -24,8 +25,9 @@ export const ROUTES = {
   SELLER_SCHEDULES: '/vendedor/horarios-visitas',
   
   // Buyer routes
-  BUYER_DASHBOARD: '/buyer/dashboard',
-  BUYER_VISITS: '/buyer/visits',
+  BUYER_DASHBOARD: '/comprador/dashboard',
+  BUYER_VISITS: '/comprador/visitas',
+  BUYER_SCHEDULE_VISIT: '/comprador/agendar-visita',
 } as const;
 
 export const STORAGE_KEYS = {

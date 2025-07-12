@@ -54,12 +54,20 @@ export class AuthService {
    * Initialize authentication state from localStorage
    */
   private initializeAuth(): void {
+    console.log('🔧 AuthService: Initializing auth state');
+    
     const token = this.getStoredToken();
     const user = this.getStoredUser();
     
+    console.log('🔧 AuthService: Stored token exists:', !!token);
+    console.log('🔧 AuthService: Stored user exists:', !!user);
+    
     if (token && user) {
+      console.log('🔧 AuthService: Setting user as authenticated:', user);
       this._currentUser.set(user);
       this._isAuthenticated.set(true);
+    } else {
+      console.log('🔧 AuthService: No valid auth data found');
     }
   }
 
@@ -67,13 +75,16 @@ export class AuthService {
    * Login user with email and password
    */
   login(credentials: LoginRequest): Observable<LoginResponse> {
+    console.log('🔐 AuthService: Login attempt for:', credentials.correo);
     this._isLoading.set(true);
     
     // Use mock service in development mode
     if (DEVELOPMENT_MODE) {
+      console.log('🔐 AuthService: Using mock authentication');
       return this.mockAuthService.login(credentials)
         .pipe(
           tap(loginResponse => {
+            console.log('🔐 AuthService: Mock login successful:', loginResponse.user);
             this.setAuthData(loginResponse);
             this.navigateAfterLogin(loginResponse.user.role);
           }),
@@ -153,12 +164,18 @@ export class AuthService {
    * Set authentication data in localStorage and signals
    */
   private setAuthData(loginResponse: LoginResponse): void {
+    console.log('💾 AuthService: Setting auth data for user:', loginResponse.user);
+    
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, loginResponse.access_token);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, loginResponse.refresh_token);
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(loginResponse.user));
     
     this._currentUser.set(loginResponse.user);
     this._isAuthenticated.set(true);
+    
+    console.log('💾 AuthService: Auth data set successfully');
+    console.log('💾 AuthService: Current user signal:', this._currentUser());
+    console.log('💾 AuthService: Is authenticated signal:', this._isAuthenticated());
   }
 
   /**
@@ -180,19 +197,28 @@ export class AuthService {
    * Navigate to appropriate dashboard after login
    */
   private navigateAfterLogin(role: UserRole): void {
-    switch (role) {
-      case UserRole.ADMIN:
-        this.router.navigate([ROUTES.ADMIN_DASHBOARD]);
-        break;
-      case UserRole.VENDEDOR:
-        this.router.navigate([ROUTES.SELLER_DASHBOARD]);
-        break;
-      case UserRole.COMPRADOR:
-        this.router.navigate([ROUTES.BUYER_DASHBOARD]);
-        break;
-      default:
-        this.router.navigate([ROUTES.DASHBOARD]);
-    }
+    console.log('🚀 AuthService: Navigating after login for role:', role);
+    
+    // Add a small delay to ensure signals are updated
+    setTimeout(() => {
+      switch (role) {
+        case UserRole.ADMIN:
+          console.log('🚀 AuthService: Redirecting to admin dashboard');
+          this.router.navigate([ROUTES.ADMIN_DASHBOARD]);
+          break;
+        case UserRole.VENDEDOR:
+          console.log('🚀 AuthService: Redirecting to vendor dashboard');
+          this.router.navigate([ROUTES.SELLER_DASHBOARD]);
+          break;
+        case UserRole.COMPRADOR:
+          console.log('🚀 AuthService: Redirecting to buyer dashboard');
+          this.router.navigate([ROUTES.BUYER_DASHBOARD]);
+          break;
+        default:
+          console.log('🚀 AuthService: Redirecting to default dashboard');
+          this.router.navigate([ROUTES.DASHBOARD]);
+      }
+    }, 100);
   }
 
   /**

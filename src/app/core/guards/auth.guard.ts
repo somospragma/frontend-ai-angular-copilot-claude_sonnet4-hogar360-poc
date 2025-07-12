@@ -38,9 +38,13 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): boolean {
+    console.log('🔒 AuthGuard: Checking auth status for route:', state.url);
+    
     const isAuthenticated = this.authService.isAuthenticated();
+    console.log('🔒 AuthGuard: Is authenticated:', isAuthenticated);
     
     if (!isAuthenticated) {
+      console.log('🔒 AuthGuard: User not authenticated, redirecting to login');
       this.router.navigate([ROUTES.LOGIN], { 
         queryParams: { returnUrl: state.url } 
       });
@@ -49,14 +53,20 @@ export class AuthGuard implements CanActivate, CanActivateChild {
 
     // Check role-based permissions
     const requiredRole = route.data?.['role'] as UserRole;
+    const userRole = this.authService.userRole();
+    
+    console.log('🔒 AuthGuard: Required role:', requiredRole);
+    console.log('🔒 AuthGuard: User role:', userRole);
+    
     if (requiredRole) {
-      const userRole = this.authService.userRole();
       if (userRole !== requiredRole) {
+        console.log('🔒 AuthGuard: Role mismatch, redirecting to appropriate dashboard');
         this.redirectToAppropriateRoute(userRole);
         return false;
       }
     }
 
+    console.log('🔒 AuthGuard: Access granted');
     return true;
   }
 
