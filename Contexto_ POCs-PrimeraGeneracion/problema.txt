@@ -1,0 +1,16 @@
+Planteamiento
+
+"Hogar360" es una plataforma web inmobiliaria diseñada para conectar a compradores, vendedores y administradores de propiedades en un solo lugar. La empresa que impulsa este proyecto está interesada en desarrollar un sitio web que facilite la gestión de inmuebles y la interacción entre los usuarios.
+El propósito principal del sitio web es simplificar la publicación y búsqueda de propiedades en venta o alquiler, permitiendo a los clientes explorar diferentes opciones según su ubicación, tipo de propiedad y características específicas. Además, el sistema proporcionará herramientas para que los agentes inmobiliarios y administradores gestionen la información de los inmuebles de manera eficiente.
+Una propiedad en la plataforma cuenta con atributos clave como nombre, ubicación (ciudad y departamento), precio, tipo (casa, apartamento, local comercial, etc.), número de habitaciones, baños, área en metros cuadrados y una descripción detallada. Además, cada propiedad podrá pertenecer a diferentes categorías, como "lujo", "económica", "nueva" o "usada", para facilitar la búsqueda de los clientes.
+
+El sistema incluirá módulos fundamentales como:
+- Gestión de propiedades: Los administradores podrán crear, editar y eliminar anuncios de propiedades.
+- Búsqueda y filtrado: Los clientes podrán buscar inmuebles según múltiples criterios como ubicación, precio, número de habitaciones y categoría.
+- Gestión de usuarios: Existirán distintos roles, como administradores, agentes inmobiliarios y clientes, cada uno con diferentes permisos y funcionalidades.
+- Publicación de anuncios: Los vendedores podrán registrar sus propiedades, agregar imágenes y definir detalles de contacto.
+Una de las funcionalidades centrales es la capacidad de conectar compradores y vendedores de manera rápida y eficiente, facilitando el acceso a información clara y detallada sobre las propiedades disponibles en el mercado.
+
+Cada HU debe estar pensado en Mobile First.
+Las funcionalidades que se generen deben tener buenas practicas (manejo de constantes, correcto nombramiento de las variables, metodos y clases, el metodo no puede ser muy grande)
+Se debe utilizar HTML semántico.
