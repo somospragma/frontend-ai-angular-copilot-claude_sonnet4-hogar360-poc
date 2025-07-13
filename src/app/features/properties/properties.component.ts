@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
@@ -18,15 +18,22 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-secondary-900">Gestión de Propiedades</h1>
-        <button 
-          (click)="toggleForm()"
-          class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium">
-          @if (showForm()) {
-            Cancelar
-          } @else {
-            Nueva Propiedad
-          }
-        </button>
+        <div class="flex gap-2">
+          <button 
+            (click)="reloadProperties()"
+            class="bg-secondary-600 text-white px-4 py-2 rounded-lg hover:bg-secondary-700 transition-colors font-medium">
+            Recargar
+          </button>
+          <button 
+            (click)="toggleForm()"
+            class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium">
+            @if (showForm()) {
+              Cancelar
+            } @else {
+              Nueva Propiedad
+            }
+          </button>
+        </div>
       </div>
 
       <!-- Form Section -->
@@ -312,7 +319,8 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
     .properties-page {
       @apply p-6 max-w-7xl mx-auto;
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PropertiesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -346,6 +354,7 @@ export class PropertiesComponent implements OnInit {
     this.loadCategorias();
     this.loadUbicaciones();
     this.loadProperties();
+    console.log('Properties loaded:', this.properties());
   }
 
   loadCategorias(): void {
@@ -379,7 +388,82 @@ export class PropertiesComponent implements OnInit {
 
   loadProperties(): void {
     // Mock data - in real app would call propertyService.getProperties()
-    this.properties.set([]);
+    const mockProperties: Property[] = [
+      {
+        id: 1,
+        nombre: 'Calle las vellanas',
+        descripcion: 'Hermosa casa en el centro de la ciudad con excelente ubicación y acabados de primera calidad.',
+        categoria: { id: 1, nombre: 'Casa', descripcion: 'Casas residenciales' },
+        cantidad_cuartos: 3,
+        cantidad_banos: 2,
+        precio: 450000000,
+        ubicacion: { 
+          id: 1, 
+          ciudad: 'Medellín',
+          departamento: 'Antioquia',
+          descripcion_ciudad: 'Ciudad de la eterna primavera',
+          descripcion_departamento: 'Departamento del noroeste de Colombia'
+        },
+        fecha_publicacion_activa: new Date(),
+        estado_publicacion: PropertyStatus.PUBLICADA,
+        fecha_publicacion: new Date(),
+        vendedor: { id: 1, nombre: 'Juan Vendedor' } as any,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        id: 2,
+        nombre: 'Apartamento Centro',
+        descripcion: 'Moderno apartamento en el corazón de la ciudad, cerca de todo.',
+        categoria: { id: 2, nombre: 'Apartamento', descripcion: 'Apartamentos urbanos' },
+        cantidad_cuartos: 2,
+        cantidad_banos: 1,
+        precio: 320000000,
+        ubicacion: { 
+          id: 2, 
+          ciudad: 'Bogotá',
+          departamento: 'Cundinamarca',
+          descripcion_ciudad: 'Capital de Colombia',
+          descripcion_departamento: 'Departamento central de Colombia'
+        },
+        fecha_publicacion_activa: new Date(),
+        estado_publicacion: PropertyStatus.PUBLICACION_PAUSADA,
+        fecha_publicacion: new Date(),
+        vendedor: { id: 1, nombre: 'Juan Vendedor' } as any,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        id: 3,
+        nombre: 'Los álamos',
+        descripcion: 'Casa familiar con jardín amplio y zona de recreación para niños.',
+        categoria: { id: 1, nombre: 'Casa', descripcion: 'Casas residenciales' },
+        cantidad_cuartos: 4,
+        cantidad_banos: 3,
+        precio: 380000000,
+        ubicacion: { 
+          id: 1, 
+          ciudad: 'Medellín',
+          departamento: 'Antioquia',
+          descripcion_ciudad: 'Ciudad de la eterna primavera',
+          descripcion_departamento: 'Departamento del noroeste de Colombia'
+        },
+        fecha_publicacion_activa: new Date(),
+        estado_publicacion: PropertyStatus.PUBLICADA,
+        fecha_publicacion: new Date(),
+        vendedor: { id: 1, nombre: 'Juan Vendedor' } as any,
+        created_at: new Date(),
+        updated_at: new Date()
+      }
+    ];
+    
+    this.properties.set(mockProperties);
+    console.log('Mock properties loaded:', mockProperties);
+  }
+
+  reloadProperties(): void {
+    console.log('Reloading properties...');
+    this.loadProperties();
   }
 
   toggleForm(): void {
@@ -406,27 +490,71 @@ export class PropertiesComponent implements OnInit {
       
       // Simulate API call
       setTimeout(() => {
-        const { images, ...propertyData } = formData;
+        // Convert IDs to numbers for comparison
+        const categoriaId = Number(formData.categoria_id);
+        const ubicacionId = Number(formData.ubicacion_id);
+        
+        console.log('Looking for categoria_id:', categoriaId, 'ubicacion_id:', ubicacionId);
+        console.log('Available categorias:', this.categorias());
+        console.log('Available ubicaciones:', this.ubicaciones());
+        
+        // Find the selected category and location
+        const selectedCategory = this.categorias().find(c => c.id === categoriaId);
+        const selectedUbicacion = this.ubicaciones().find(u => u.id === ubicacionId);
+        
+        if (!selectedCategory || !selectedUbicacion) {
+          console.error('Category or Location not found');
+          console.error('selectedCategory:', selectedCategory);
+          console.error('selectedUbicacion:', selectedUbicacion);
+          this.isSubmitting.set(false);
+          return;
+        }
+
         const newProperty: Property = {
-          id: Date.now(),
-          ...propertyData,
-          categoria: this.categorias().find(c => c.id === formData.categoria_id)!,
-          ubicacion: this.ubicaciones().find(u => u.id === formData.ubicacion_id)! as any,
+          id: this.editingProperty() ? this.editingProperty()!.id : Date.now(),
+          nombre: formData.nombre,
+          descripcion: formData.descripcion,
+          categoria: selectedCategory,
+          cantidad_cuartos: formData.cantidad_cuartos,
+          cantidad_banos: formData.cantidad_banos,
+          precio: formData.precio,
+          ubicacion: {
+            id: selectedUbicacion.id,
+            ciudad: selectedUbicacion.ciudad.nombre,
+            departamento: selectedUbicacion.departamento.nombre,
+            descripcion_ciudad: `Ciudad de ${selectedUbicacion.ciudad.nombre}`,
+            descripcion_departamento: `Departamento de ${selectedUbicacion.departamento.nombre}`
+          },
+          fecha_publicacion_activa: new Date(formData.fecha_publicacion_activa),
+          estado_publicacion: formData.estado_publicacion,
           fecha_publicacion: new Date(),
-          vendedor: { id: 1, nombre: 'Vendedor Actual' } as any,
-          images: images ? images.map(file => URL.createObjectURL(file)) : []
+          vendedor: { id: 1, nombre: 'Usuario Actual' } as any,
+          created_at: new Date(),
+          updated_at: new Date()
         };
         
         if (this.editingProperty()) {
           // Update existing property
-          const updated = this.properties().map(p => 
-            p.id === this.editingProperty()!.id ? { ...newProperty, id: this.editingProperty()!.id } : p
+          const currentProperties = this.properties();
+          const updatedProperties = currentProperties.map(p => 
+            p.id === this.editingProperty()!.id ? newProperty : p
           );
-          this.properties.set(updated);
+          this.properties.set(updatedProperties);
+          console.log('Property updated:', newProperty);
         } else {
           // Add new property
-          this.properties.set([...this.properties(), newProperty]);
+          const currentProperties = this.properties();
+          const updatedProperties = [...currentProperties, newProperty];
+          this.properties.set(updatedProperties);
+          console.log('New property added:', newProperty);
         }
+        
+        console.log('Current properties list:', this.properties());
+        
+        // Force a reload to ensure the UI updates
+        setTimeout(() => {
+          this.reloadProperties();
+        }, 100);
         
         this.resetForm();
         this.showForm.set(false);
@@ -453,8 +581,15 @@ export class PropertiesComponent implements OnInit {
 
   deleteProperty(id: number): void {
     if (confirm('¿Estás seguro de que quieres eliminar esta propiedad?')) {
-      const updated = this.properties().filter(p => p.id !== id);
-      this.properties.set(updated);
+      const currentProperties = this.properties();
+      const updatedProperties = currentProperties.filter(p => p.id !== id);
+      this.properties.set(updatedProperties);
+      console.log('Property deleted, remaining properties:', updatedProperties);
+      
+      // Force a reload to ensure consistency
+      setTimeout(() => {
+        this.reloadProperties();
+      }, 100);
     }
   }
 

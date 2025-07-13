@@ -20,33 +20,41 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
     title: 'Iniciar Sesión - Hogar360'
   },
-  // HU #7: Listar casas para todos los roles
+  
+  // Public routes with layout
   {
-    path: 'propiedades',
-    loadComponent: () => import('./features/property-listing/property-listing.component').then(m => m.PropertyListingComponent),
-    title: 'Propiedades Disponibles - Hogar360'
-  },
-  // HU #10: Listar horarios disponibles para todos los roles
-  {
-    path: 'horarios-disponibles',
-    loadComponent: () => import('./features/visit-schedules-listing/visit-schedules-listing.component').then(m => m.VisitSchedulesListingComponent),
-    title: 'Horarios de Visitas Disponibles - Hogar360'
+    path: '',
+    loadComponent: () => import('./layout/public-layout/public-layout.component').then(m => m.PublicLayoutComponent),
+    children: [
+      // HU #7: Listar casas para todos los roles
+      {
+        path: 'propiedades',
+        loadComponent: () => import('./features/property-listing/property-listing.component').then(m => m.PropertyListingComponent),
+        title: 'Propiedades Disponibles - Hogar360'
+      },
+      // HU #10: Listar horarios disponibles para todos los roles
+      {
+        path: 'horarios-disponibles',
+        loadComponent: () => import('./features/visit-schedules-listing/visit-schedules-listing.component').then(m => m.VisitSchedulesListingComponent),
+        title: 'Horarios de Visitas Disponibles - Hogar360'
+      }
+    ]
   },
   
-  // Protected routes - Dashboard simple por ahora
+  // Protected routes - Dashboard redirects to role-based dashboard
   {
     path: 'dashboard',
     canActivate: [AuthGuard],
-    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    title: 'Dashboard - Hogar360'
+    loadComponent: () => import('./features/dashboard/dashboard-redirect.component').then(m => m.DashboardRedirectComponent),
+    title: 'Redirigiendo... - Hogar360'
   },
   
-  // Admin routes - HU #1, #3, #5, #8 with shared layout
+  // Admin routes - HU #1, #3, #5, #8 with unified layout
   {
     path: 'admin',
     canActivate: [AuthGuard],
     data: { role: UserRole.ADMIN },
-    loadComponent: () => import('./layout/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
+    loadComponent: () => import('./layout/unified-layout/unified-layout.component').then(m => m.UnifiedLayoutComponent),
     children: [
       {
         path: 'dashboard',
@@ -89,12 +97,12 @@ export const routes: Routes = [
     ]
   },
   
-  // Seller routes - HU #6, #9 with shared layout
+  // Seller routes - HU #6, #9 with unified layout
   {
     path: 'vendedor',
     canActivate: [AuthGuard],
     data: { role: UserRole.VENDEDOR },
-    loadComponent: () => import('./layout/user-layout/user-layout.component').then(m => m.UserLayoutComponent),
+    loadComponent: () => import('./layout/unified-layout/unified-layout.component').then(m => m.UnifiedLayoutComponent),
     children: [
       {
         path: 'dashboard',
@@ -126,12 +134,12 @@ export const routes: Routes = [
     ]
   },
   
-  // Buyer routes - HU #11 with shared layout
+  // Buyer routes - HU #11 with unified layout
   {
     path: 'comprador',
     canActivate: [AuthGuard],
     data: { role: UserRole.COMPRADOR },
-    loadComponent: () => import('./layout/user-layout/user-layout.component').then(m => m.UserLayoutComponent),
+    loadComponent: () => import('./layout/unified-layout/unified-layout.component').then(m => m.UnifiedLayoutComponent),
     children: [
       {
         path: 'dashboard',

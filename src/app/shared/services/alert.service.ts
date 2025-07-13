@@ -158,14 +158,16 @@ export class AlertService {
    * Remover alerta del DOM
    */
   private removeAlert(componentRef: ComponentRef<CustomAlertComponent>): void {
-    // Pequeño delay para permitir que la animación de salida se complete
-    setTimeout(() => {
-      const currentAlerts = this.activeAlerts();
-      const filteredAlerts = currentAlerts.filter(alert => alert !== componentRef);
-      this.activeAlerts.set(filteredAlerts);
+    const currentAlerts = this.activeAlerts();
+    const filteredAlerts = currentAlerts.filter(alert => alert !== componentRef);
+    this.activeAlerts.set(filteredAlerts);
 
-      componentRef.destroy();
-    }, 300);
+    // Remover del DOM inmediatamente
+    if (componentRef.location.nativeElement.parentNode) {
+      componentRef.location.nativeElement.parentNode.removeChild(componentRef.location.nativeElement);
+    }
+    
+    componentRef.destroy();
   }
 
   /**

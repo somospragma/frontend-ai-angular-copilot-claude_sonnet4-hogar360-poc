@@ -141,18 +141,93 @@ import { InputComponent } from '../../../shared/components/atoms/input/input.com
 
             <!-- Demo Credentials -->
             <div class="demo-section">
-              <details class="demo-toggle">
+              <details class="demo-toggle" [attr.open]="true">
                 <summary class="demo-summary">🔑 Credenciales de prueba</summary>
                 <div class="demo-content">
                   <div class="demo-item">
-                    <strong>Admin:</strong> admin&#64;hogar360.com / admin123
+                    <div class="demo-role">
+                      <strong>Admin</strong>
+                      <div class="demo-buttons">
+                        <button 
+                          type="button"
+                          (click)="fillCredentials('admin@hogar360.com', 'admin123')"
+                          class="demo-fill-btn">
+                          Autorellenar
+                        </button>
+                        <button 
+                          type="button"
+                          (click)="copyCredentials('admin@hogar360.com', 'admin123')"
+                          class="demo-copy-btn">
+                          📋 Copiar
+                        </button>
+                      </div>
+                    </div>
+                    <div class="demo-credentials">
+                      <span class="demo-email">admin&#64;hogar360.com</span>
+                      <span class="demo-separator">•</span>
+                      <span class="demo-password">admin123</span>
+                    </div>
                   </div>
+                  
                   <div class="demo-item">
-                    <strong>Vendedor:</strong> vendedor&#64;hogar360.com / vendedor123
+                    <div class="demo-role">
+                      <strong>Vendedor</strong>
+                      <div class="demo-buttons">
+                        <button 
+                          type="button"
+                          (click)="fillCredentials('vendedor@hogar360.com', 'vendedor123')"
+                          class="demo-fill-btn">
+                          Autorellenar
+                        </button>
+                        <button 
+                          type="button"
+                          (click)="copyCredentials('vendedor@hogar360.com', 'vendedor123')"
+                          class="demo-copy-btn">
+                          📋 Copiar
+                        </button>
+                      </div>
+                    </div>
+                    <div class="demo-credentials">
+                      <span class="demo-email">vendedor&#64;hogar360.com</span>
+                      <span class="demo-separator">•</span>
+                      <span class="demo-password">vendedor123</span>
+                    </div>
                   </div>
+                  
                   <div class="demo-item">
-                    <strong>Comprador:</strong> comprador&#64;hogar360.com / comprador123
+                    <div class="demo-role">
+                      <strong>Comprador</strong>
+                      <div class="demo-buttons">
+                        <button 
+                          type="button"
+                          (click)="fillCredentials('comprador@hogar360.com', 'comprador123')"
+                          class="demo-fill-btn">
+                          Autorellenar
+                        </button>
+                        <button 
+                          type="button"
+                          (click)="copyCredentials('comprador@hogar360.com', 'comprador123')"
+                          class="demo-copy-btn">
+                          📋 Copiar
+                        </button>
+                      </div>
+                    </div>
+                    <div class="demo-credentials">
+                      <span class="demo-email">comprador&#64;hogar360.com</span>
+                      <span class="demo-separator">•</span>
+                      <span class="demo-password">comprador123</span>
+                    </div>
                   </div>
+                  
+                  @if (copyMessage()) {
+                    <div class="copy-message visible">
+                      ✅ {{ copyMessage() }}
+                    </div>
+                  } @else {
+                    <div class="copy-message hidden">
+                      &nbsp;
+                    </div>
+                  }
                 </div>
               </details>
             </div>
@@ -270,11 +345,63 @@ import { InputComponent } from '../../../shared/components/atoms/input/input.com
     }
 
     .demo-toggle {
-      @apply bg-neutral-50 rounded-lg p-3;
+      @apply bg-neutral-50 rounded-lg p-4;
     }
 
     .demo-summary {
-      @apply text-sm font-medium text-neutral-600 cursor-pointer hover:text-primary-600 transition-colors;
+      @apply text-sm font-medium text-neutral-600 cursor-pointer hover:text-primary-600 transition-colors mb-3;
+    }
+
+    .demo-content {
+      @apply space-y-3 mt-3;
+    }
+
+    .demo-item {
+      @apply bg-white rounded-lg p-3 border border-neutral-200;
+    }
+
+    .demo-role {
+      @apply flex justify-between items-center mb-2;
+    }
+
+    .demo-buttons {
+      @apply flex gap-2;
+    }
+
+    .demo-fill-btn {
+      @apply px-3 py-1 bg-primary-500 text-white text-xs rounded-md hover:bg-primary-600 transition-colors;
+    }
+
+    .demo-copy-btn {
+      @apply px-3 py-1 bg-neutral-500 text-white text-xs rounded-md hover:bg-neutral-600 transition-colors;
+    }
+
+    .demo-credentials {
+      @apply text-sm text-neutral-600 font-mono;
+    }
+
+    .demo-email {
+      @apply text-primary-600;
+    }
+
+    .demo-separator {
+      @apply mx-2 text-neutral-400;
+    }
+
+    .demo-password {
+      @apply text-secondary-600;
+    }
+
+    .copy-message {
+      @apply text-xs p-2 rounded-md text-center min-h-[2rem] flex items-center justify-center;
+    }
+
+    .copy-message.visible {
+      @apply text-success-600 bg-success-50;
+    }
+
+    .copy-message.hidden {
+      @apply text-transparent bg-transparent;
     }
 
     .demo-content {
@@ -315,11 +442,34 @@ export class LoginComponent {
 
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  copyMessage = signal<string | null>(null);
 
   loginForm: FormGroup = this.fb.group({
     correo: ['', [Validators.required, Validators.email]],
     clave: ['', [Validators.required, Validators.minLength(6)]]
   });
+
+  fillCredentials(email: string, password: string): void {
+    this.loginForm.patchValue({
+      correo: email,
+      clave: password
+    });
+    this.copyMessage.set('Credenciales autorrellenadas ✓');
+    setTimeout(() => this.copyMessage.set(null), 2000);
+  }
+
+  async copyCredentials(email: string, password: string): Promise<void> {
+    try {
+      const credentials = `Email: ${email}\nPassword: ${password}`;
+      await navigator.clipboard.writeText(credentials);
+      this.copyMessage.set('Credenciales copiadas al portapapeles ✓');
+      setTimeout(() => this.copyMessage.set(null), 2000);
+    } catch (err) {
+      console.error('Error al copiar al portapapeles:', err);
+      this.copyMessage.set('Error al copiar credenciales');
+      setTimeout(() => this.copyMessage.set(null), 2000);
+    }
+  }
 
   onSubmit(): void {
     if (this.loginForm.invalid) {

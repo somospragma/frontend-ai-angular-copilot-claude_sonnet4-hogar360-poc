@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, forwardRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef, forwardRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -179,6 +179,8 @@ export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'sear
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InputComponent implements ControlValueAccessor {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input() label?: string;
   @Input() placeholder?: string;
   @Input() type: InputType = 'text';
@@ -236,6 +238,7 @@ export class InputComponent implements ControlValueAccessor {
   // ControlValueAccessor implementation
   writeValue(value: string): void {
     this.value = value || '';
+    this.cdr.markForCheck(); // Force change detection
   }
 
   registerOnChange(fn: (value: string) => void): void {

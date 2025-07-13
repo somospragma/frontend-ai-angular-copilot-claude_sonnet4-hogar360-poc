@@ -15,62 +15,60 @@ export interface AlertData {
   standalone: true,
   imports: [CommonModule],
   template: `
-    @if (isVisible()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm animate-fadeIn">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all duration-300 animate-slideIn">
-          <!-- Header -->
-          <div class="px-6 py-4" 
-               [class]="getHeaderClass()">
-            <div class="flex items-center">
-              <div class="flex-shrink-0 mr-3">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center"
-                     [class]="getIconBackgroundClass()">
-                  <i [class]="getIconClass()" class="text-sm"></i>
-                </div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm animate-fadeIn">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all duration-300 animate-slideIn">
+        <!-- Header -->
+        <div class="px-6 py-4" 
+             [class]="getHeaderClass()">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 mr-3">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                   [class]="getIconBackgroundClass()">
+                <i [class]="getIconClass()" class="text-sm"></i>
               </div>
-              <h3 class="text-lg font-semibold text-gray-900">{{ alertData.title }}</h3>
             </div>
-          </div>
-
-          <!-- Content -->
-          <div class="px-6 py-6">
-            <p class="text-gray-600 leading-relaxed">{{ alertData.message }}</p>
-          </div>
-
-          <!-- Actions -->
-          <div class="px-6 py-4 bg-gray-50">
-            @if (alertData.type === 'confirm') {
-              <div class="flex space-x-3 justify-end">
-                @if (alertData.showCancel) {
-                  <button
-                    (click)="onCancel()"
-                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 hover:scale-105"
-                  >
-                    {{ alertData.cancelText || 'Cancelar' }}
-                  </button>
-                }
-                <button
-                  (click)="onConfirm()"
-                  class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:scale-105"
-                >
-                  {{ alertData.confirmText || 'Confirmar' }}
-                </button>
-              </div>
-            } @else {
-              <div class="flex justify-end">
-                <button
-                  (click)="onClose()"
-                  class="px-6 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 hover:scale-105"
-                  [class]="getButtonClass()"
-                >
-                  Entendido
-                </button>
-              </div>
-            }
+            <h3 class="text-lg font-semibold text-gray-900">{{ alertData.title }}</h3>
           </div>
         </div>
+
+        <!-- Content -->
+        <div class="px-6 py-6">
+          <p class="text-gray-600 leading-relaxed">{{ alertData.message }}</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="px-6 py-4 bg-gray-50">
+          @if (alertData.type === 'confirm') {
+            <div class="flex space-x-3 justify-end">
+              @if (alertData.showCancel) {
+                <button
+                  (click)="onCancel()"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 hover:scale-105"
+                >
+                  {{ alertData.cancelText || 'Cancelar' }}
+                </button>
+              }
+              <button
+                (click)="onConfirm()"
+                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:scale-105"
+              >
+                {{ alertData.confirmText || 'Confirmar' }}
+              </button>
+            </div>
+          } @else {
+            <div class="flex justify-end">
+              <button
+                (click)="onClose()"
+                class="px-6 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 hover:scale-105"
+                [class]="getButtonClass()"
+              >
+                Entendido
+              </button>
+            </div>
+          }
+        </div>
       </div>
-    }
+    </div>
   `,
   styles: [`
     /* Animaciones de entrada */
@@ -142,17 +140,14 @@ export class CustomAlertComponent {
 
   onConfirm(): void {
     this.confirmed.emit();
-    this.isVisible.set(false);
   }
 
   onCancel(): void {
     this.cancelled.emit();
-    this.isVisible.set(false);
   }
 
   onClose(): void {
     this.closed.emit();
-    this.isVisible.set(false);
   }
 
   getHeaderClass(): string {

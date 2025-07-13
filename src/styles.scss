@@ -140,3 +140,55 @@
     @apply px-4;
   }
 }
+
+/* Estilos específicos para formularios de properties y ubicaciones */
+.properties-page input,
+.properties-page textarea,
+.properties-page select,
+.ubicaciones-page input,
+.ubicaciones-page textarea,
+.ubicaciones-page select {
+  background-color: white !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
+  color: #374151 !important;
+  transition: all 0.2s ease-in-out !important;
+  display: block !important;
+  width: 100% !important;
+  appearance: none !important;
+  background-image: none !important;
+  margin: 0 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.properties-page input:focus,
+.properties-page textarea:focus,
+.properties-page select:focus,
+.ubicaciones-page input:focus,
+.ubicaciones-page textarea:focus,
+.ubicaciones-page select:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.properties-page input::placeholder,
+.properties-page textarea::placeholder,
+.ubicaciones-page input::placeholder,
+.ubicaciones-page textarea::placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+/* Estilos específicos para selects */
+.properties-page select,
+.ubicaciones-page select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 0.5rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.5em 1.5em !important;
+  padding-right: 2.5rem !important;
+}

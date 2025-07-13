@@ -1,8 +1,10 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ButtonComponent } from '../../../shared/components/atoms/button/button.component';
+import { UserRole } from '../../../core/interfaces';
 
 @Component({
   selector: 'app-dashboard-content',
@@ -125,7 +127,7 @@ import { ButtonComponent } from '../../../shared/components/atoms/button/button.
         </div>
         
         <div class="actions-grid">
-          <div class="action-card">
+          <div class="action-card" (click)="navigateToQuickAction('categories')">
             <div class="action-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="3" y="4" width="6" height="6" rx="1"/>
@@ -134,30 +136,30 @@ import { ButtonComponent } from '../../../shared/components/atoms/button/button.
                 <rect x="3" y="12" width="6" height="6" rx="1"/>
               </svg>
             </div>
-            <h3 class="action-title">Nueva Categoría</h3>
-            <p class="action-description">Crear una nueva categoría de propiedad</p>
+            <h3 class="action-title">{{ getActionTitle('categories') }}</h3>
+            <p class="action-description">{{ getActionDescription('categories') }}</p>
           </div>
 
-          <div class="action-card">
+          <div class="action-card" (click)="navigateToQuickAction('locations')">
             <div class="action-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                 <circle cx="12" cy="10" r="3"/>
               </svg>
             </div>
-            <h3 class="action-title">Nueva Ubicación</h3>
-            <p class="action-description">Agregar una nueva ubicación disponible</p>
+            <h3 class="action-title">{{ getActionTitle('locations') }}</h3>
+            <p class="action-description">{{ getActionDescription('locations') }}</p>
           </div>
 
-          <div class="action-card">
+          <div class="action-card" (click)="navigateToQuickAction('users')">
             <div class="action-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
             </div>
-            <h3 class="action-title">Nuevo Vendedor</h3>
-            <p class="action-description">Registrar un nuevo usuario vendedor</p>
+            <h3 class="action-title">{{ getActionTitle('users') }}</h3>
+            <p class="action-description">{{ getActionDescription('users') }}</p>
           </div>
         </div>
       </div>
@@ -255,6 +257,11 @@ import { ButtonComponent } from '../../../shared/components/atoms/button/button.
       @apply w-10 h-10 bg-primary-100 text-primary-600 rounded-lg flex items-center justify-center mb-3;
     }
 
+    .action-icon svg {
+      @apply w-5 h-5 text-primary-600;
+      color: #2563eb; /* Fallback color */
+    }
+
     .action-title {
       @apply font-medium text-neutral-900 mb-1;
     }
@@ -278,6 +285,92 @@ import { ButtonComponent } from '../../../shared/components/atoms/button/button.
 })
 export class DashboardContentComponent {
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   currentUser = this.authService.currentUser;
+
+  navigateToQuickAction(action: string): void {
+    const currentUser = this.authService.currentUser();
+    if (!currentUser) {
+      console.error('No user found');
+      return;
+    }
+
+    const userRole = currentUser.role;
+    let route = '';
+
+    switch (action) {
+      case 'categories':
+        route = userRole === UserRole.ADMIN ? '/admin/categories' : '/vendedor/categories';
+        break;
+      case 'locations':
+        route = userRole === UserRole.ADMIN ? '/admin/locations' : '/vendedor/locations';
+        break;
+      case 'users':
+        route = userRole === UserRole.ADMIN ? '/admin/users' : '/vendedor/profile';
+        break;
+      case 'properties':
+        if (userRole === UserRole.ADMIN) {
+          route = '/admin/properties';
+        } else if (userRole === UserRole.VENDEDOR) {
+          route = '/vendedor/properties';
+        } else {
+          route = '/comprador/properties';
+        }
+        break;
+      default:
+        console.warn('Unknown action:', action);
+        return;
+    }
+
+    this.router.navigate([route]);
+  }
+
+  getActionTitle(action: string): string {
+    const currentUser = this.authService.currentUser();
+    const userRole = currentUser?.role;
+
+    switch (action) {
+      case 'categories':
+        return userRole === UserRole.ADMIN ? 'Gestionar Categorías' : 'Ver Categorías';
+      case 'locations':
+        return userRole === UserRole.ADMIN ? 'Gestionar Ubicaciones' : 'Ver Ubicaciones';
+      case 'users':
+        return userRole === UserRole.ADMIN ? 'Gestionar Usuarios' : 'Mi Perfil';
+      case 'properties':
+        if (userRole === UserRole.ADMIN) {
+          return 'Todas las Propiedades';
+        } else if (userRole === UserRole.VENDEDOR) {
+          return 'Mis Propiedades';
+        } else {
+          return 'Buscar Propiedades';
+        }
+      default:
+        return 'Acción';
+    }
+  }
+
+  getActionDescription(action: string): string {
+    const currentUser = this.authService.currentUser();
+    const userRole = currentUser?.role;
+
+    switch (action) {
+      case 'categories':
+        return userRole === UserRole.ADMIN ? 'Crear y administrar categorías de propiedades' : 'Explorar categorías disponibles';
+      case 'locations':
+        return userRole === UserRole.ADMIN ? 'Agregar y gestionar ubicaciones' : 'Ver ubicaciones disponibles';
+      case 'users':
+        return userRole === UserRole.ADMIN ? 'Administrar vendedores y compradores' : 'Ver y editar información personal';
+      case 'properties':
+        if (userRole === UserRole.ADMIN) {
+          return 'Supervisar todas las propiedades del sistema';
+        } else if (userRole === UserRole.VENDEDOR) {
+          return 'Gestionar mis propiedades en venta';
+        } else {
+          return 'Encontrar la propiedad ideal';
+        }
+      default:
+        return 'Realizar acción';
+    }
+  }
 }

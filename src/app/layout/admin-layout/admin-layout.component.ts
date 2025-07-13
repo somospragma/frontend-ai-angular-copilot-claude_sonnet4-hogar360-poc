@@ -4,19 +4,18 @@ import { Router, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { LogoComponent } from '../../shared/components/atoms/logo/logo.component';
-import { ButtonComponent } from '../../shared/components/atoms/button/button.component';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, LogoComponent, ButtonComponent],
+  imports: [CommonModule, RouterOutlet, LogoComponent],
   template: `
     <div class="admin-layout">
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
           <div class="logo-container" (click)="navigateToHome($event)">
-            <app-logo size="md" variant="white"></app-logo>
+            <app-logo size="md" variant="default"></app-logo>
           </div>
         </div>
         
@@ -53,10 +52,21 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
                  [class.active]="isActiveRoute('/admin/propiedades')"
                  (click)="navigateTo('/admin/propiedades', $event)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21 8.5l-7 7-4.5-4.5L7 13.5l2.5 2.5L14 8z"/>
-                  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                  <path d="M10 2v20l-5.5-4L10 2z"/>
+                  <path d="M14 2v20l5.5-4L14 2z"/>
                 </svg>
                 Propiedades
+              </a>
+            </li>
+            <li>
+              <a class="nav-item" 
+                 [class.active]="isActiveRoute('/admin/ubicaciones')"
+                 (click)="navigateTo('/admin/ubicaciones', $event)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                Ubicaciones
               </a>
             </li>
             <li>
@@ -156,11 +166,15 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
 
     /* Sidebar */
     .sidebar {
-      @apply w-64 bg-primary-600 text-white flex flex-col fixed h-full z-10;
+      @apply w-64 flex flex-col fixed h-full z-10;
+      background: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      color: #374151;
     }
 
     .sidebar-header {
-      @apply p-6 border-b border-primary-500;
+      @apply p-6;
+      border-bottom: 1px solid #e5e7eb;
     }
 
     .logo-container {
@@ -176,11 +190,12 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
     }
 
     .nav-item {
-      @apply flex items-center gap-3 px-4 py-3 rounded-lg text-primary-100 hover:bg-primary-500 transition-colors cursor-pointer;
+      @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer;
     }
 
     .nav-item.active {
-      @apply bg-primary-500 text-white shadow-lg;
+      @apply text-blue-600 font-medium;
+      background: #eff6ff;
     }
 
     /* Main Area */
