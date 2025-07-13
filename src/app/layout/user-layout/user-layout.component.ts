@@ -5,13 +5,14 @@ import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { LogoComponent } from '../../shared/components/atoms/logo/logo.component';
 import { ButtonComponent } from '../../shared/components/atoms/button/button.component';
+import { UserRole } from '../../core/interfaces';
 
 @Component({
-  selector: 'app-admin-layout',
+  selector: 'app-user-layout',
   standalone: true,
   imports: [CommonModule, RouterOutlet, LogoComponent, ButtonComponent],
   template: `
-    <div class="admin-layout">
+    <div class="user-layout">
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
@@ -22,10 +23,11 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
         
         <nav class="sidebar-nav">
           <ul class="nav-list">
+            <!-- Dashboard común para todos -->
             <li>
               <a class="nav-item" 
-                 [class.active]="isActiveRoute('/admin/dashboard')"
-                 (click)="navigateTo('/admin/dashboard', $event)">
+                 [class.active]="isActiveRoute('dashboard')"
+                 (click)="navigateToUserDashboard($event)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <rect x="3" y="4" width="6" height="7" rx="1"/>
                   <rect x="13" y="4" width="6" height="7" rx="1"/>
@@ -35,52 +37,126 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
                 Dashboard
               </a>
             </li>
-            <li>
-              <a class="nav-item" 
-                 [class.active]="isActiveRoute('/admin/categorias')"
-                 (click)="navigateTo('/admin/categorias', $event)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="3" y="4" width="6" height="6" rx="1"/>
-                  <rect x="11" y="4" width="6" height="6" rx="1"/>
-                  <rect x="11" y="12" width="6" height="6" rx="1"/>
-                  <rect x="3" y="12" width="6" height="6" rx="1"/>
-                </svg>
-                Categorías
-              </a>
-            </li>
-            <li>
-              <a class="nav-item" 
-                 [class.active]="isActiveRoute('/admin/propiedades')"
-                 (click)="navigateTo('/admin/propiedades', $event)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21 8.5l-7 7-4.5-4.5L7 13.5l2.5 2.5L14 8z"/>
-                  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                Propiedades
-              </a>
-            </li>
-            <li>
-              <a class="nav-item" 
-                 [class.active]="isActiveRoute('/admin/usuarios')"
-                 (click)="navigateTo('/admin/usuarios-vendedores', $event)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-                Usuarios
-              </a>
-            </li>
-            <li>
-              <a class="nav-item" 
-                 [class.active]="isActiveRoute('/admin/configuracion')"
-                 (click)="navigateTo('/admin/configuracion', $event)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-                Configuración
-              </a>
-            </li>
+
+            <!-- Opciones de Admin -->
+            @if (userRole() === UserRole.ADMIN) {
+              <li>
+                <a class="nav-item" 
+                   [class.active]="isActiveRoute('/admin/categorias')"
+                   (click)="navigateTo('/admin/categorias', $event)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="3" y="4" width="6" height="6" rx="1"/>
+                    <rect x="11" y="4" width="6" height="6" rx="1"/>
+                    <rect x="11" y="12" width="6" height="6" rx="1"/>
+                    <rect x="3" y="12" width="6" height="6" rx="1"/>
+                  </svg>
+                  Categorías
+                </a>
+              </li>
+              <li>
+                <a class="nav-item" 
+                   [class.active]="isActiveRoute('/admin/ubicaciones')"
+                   (click)="navigateTo('/admin/ubicaciones', $event)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  Ubicaciones
+                </a>
+              </li>
+              <li>
+                <a class="nav-item" 
+                   [class.active]="isActiveRoute('/admin/usuarios-vendedores')"
+                   (click)="navigateTo('/admin/usuarios-vendedores', $event)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  Usuarios Vendedores
+                </a>
+              </li>
+            }
+
+            <!-- Opciones de Vendedor -->
+            @if (userRole() === UserRole.VENDEDOR) {
+              <li>
+                <a class="nav-item" 
+                   [class.active]="isActiveRoute('/vendedor/propiedades')"
+                   (click)="navigateTo('/vendedor/propiedades', $event)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z"/>
+                    <path d="M8 21v-4a2 2 0 012-2h4a2 2 0 012 2v4"/>
+                  </svg>
+                  Mis Propiedades
+                </a>
+              </li>
+              <li>
+                <a class="nav-item" 
+                   [class.active]="isActiveRoute('/vendedor/horarios-visitas')"
+                   (click)="navigateTo('/vendedor/horarios-visitas', $event)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12,6 12,12 16,14"/>
+                  </svg>
+                  Horarios de Visitas
+                </a>
+              </li>
+            }
+
+            <!-- Opciones de Comprador -->
+            @if (userRole() === UserRole.COMPRADOR) {
+              <li>
+                <a class="nav-item" 
+                   [class.active]="isActiveRoute('/propiedades')"
+                   (click)="navigateTo('/propiedades', $event)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 8.5l-7 7-4.5-4.5L7 13.5l2.5 2.5L14 8z"/>
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  Ver Propiedades
+                </a>
+              </li>
+              <li>
+                <a class="nav-item" 
+                   [class.active]="isActiveRoute('/comprador/visitas')"
+                   (click)="navigateTo('/comprador/visitas', $event)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 11H3v9h6v-9z"/>
+                    <path d="M21 11h-6v9h6v-9z"/>
+                    <path d="M12 2L3 7v4h18V7l-9-5z"/>
+                  </svg>
+                  Mis Visitas
+                </a>
+              </li>
+              <li>
+                <a class="nav-item" 
+                   [class.active]="isActiveRoute('/horarios-disponibles')"
+                   (click)="navigateTo('/horarios-disponibles', $event)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Horarios Disponibles
+                </a>
+              </li>
+            }
+
+            <!-- Configuración común para Admin y Vendedor -->
+            @if (userRole() === UserRole.ADMIN || userRole() === UserRole.VENDEDOR) {
+              <li>
+                <a class="nav-item" 
+                   [class.active]="isActiveRoute('configuracion')"
+                   (click)="navigateToSettings($event)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                  Configuración
+                </a>
+              </li>
+            }
           </ul>
         </nav>
       </aside>
@@ -150,7 +226,7 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
     </div>
   `,
   styles: [`
-    .admin-layout {
+    .user-layout {
       @apply flex min-h-screen bg-neutral-50;
     }
 
@@ -234,10 +310,6 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
       @apply relative;
     }
 
-    .dropdown-toggle {
-      @apply p-2 rounded-lg hover:bg-neutral-100 transition-colors;
-    }
-
     .dropdown-menu {
       @apply absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-neutral-200 py-2 z-30;
     }
@@ -297,12 +369,16 @@ import { ButtonComponent } from '../../shared/components/atoms/button/button.com
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdminLayoutComponent implements OnInit {
+export class UserLayoutComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   currentUser = this.authService.currentUser;
   dropdownOpen = signal(false);
+  userRole = this.authService.userRole;
+
+  // Exponer UserRole para usarlo en el template
+  UserRole = UserRole;
 
   ngOnInit(): void {
     // Verificar autenticación al inicializar
@@ -323,10 +399,13 @@ export class AdminLayoutComponent implements OnInit {
     const url = this.router.url;
     if (url.includes('/dashboard')) return 'Dashboard';
     if (url.includes('/categorias')) return 'Categorías';
+    if (url.includes('/ubicaciones')) return 'Ubicaciones';
     if (url.includes('/propiedades')) return 'Propiedades';
     if (url.includes('/usuarios')) return 'Usuarios';
+    if (url.includes('/horarios')) return 'Horarios';
+    if (url.includes('/visitas')) return 'Visitas';
     if (url.includes('/configuracion')) return 'Configuración';
-    return 'Admin';
+    return 'Dashboard';
   }
 
   getUserName(): string {
@@ -334,11 +413,10 @@ export class AdminLayoutComponent implements OnInit {
   }
 
   getUserRole(): string {
-    return this.currentUser()?.role || 'admin';
+    return this.currentUser()?.role || 'user';
   }
 
   getUserAvatar(): string {
-    // Usar una imagen por defecto o la imagen del usuario
     return this.currentUser()?.avatar || '/assets/images/avatar.jpg';
   }
 
@@ -357,6 +435,36 @@ export class AdminLayoutComponent implements OnInit {
     this.router.navigate(['/landing']);
   }
 
+  navigateToUserDashboard(event?: Event): void {
+    event?.preventDefault();
+    const role = this.userRole();
+    switch (role) {
+      case UserRole.ADMIN:
+        this.router.navigate(['/admin/dashboard']);
+        break;
+      case UserRole.VENDEDOR:
+        this.router.navigate(['/vendedor/dashboard']);
+        break;
+      case UserRole.COMPRADOR:
+        this.router.navigate(['/comprador/dashboard']);
+        break;
+      default:
+        this.router.navigate(['/dashboard']);
+    }
+    this.dropdownOpen.set(false);
+  }
+
+  navigateToSettings(event?: Event): void {
+    event?.preventDefault();
+    const role = this.userRole();
+    if (role === UserRole.ADMIN) {
+      this.router.navigate(['/admin/configuracion']);
+    } else {
+      this.router.navigate(['/vendedor/configuracion']);
+    }
+    this.dropdownOpen.set(false);
+  }
+
   toggleDropdown(event?: Event): void {
     event?.preventDefault();
     event?.stopPropagation();
@@ -366,7 +474,7 @@ export class AdminLayoutComponent implements OnInit {
   viewProfile(event?: Event): void {
     event?.preventDefault();
     this.dropdownOpen.set(false);
-    this.router.navigate(['/admin/perfil']);
+    this.router.navigate(['/perfil']);
   }
 
   logout(event?: Event): void {

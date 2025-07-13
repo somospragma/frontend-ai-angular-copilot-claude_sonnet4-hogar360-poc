@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, forwar
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
-export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'search' | 'url' | 'textarea';
+export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'search' | 'url' | 'date' | 'textarea';
 
 @Component({
   selector: 'app-input',
@@ -73,6 +73,20 @@ export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'sear
     </div>
   `,
   styles: [`
+    /* Sobrescribir COMPLETAMENTE los estilos base de Tailwind */
+    :host input,
+    :host textarea {
+      appearance: none !important;
+      background-image: none !important;
+      font-family: inherit !important;
+      font-size: 1rem !important;
+      line-height: 1.5rem !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      --tw-shadow: none !important;
+      --tw-ring-shadow: none !important;
+    }
+
     .input-wrapper {
       @apply w-full;
     }
@@ -86,19 +100,48 @@ export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'sear
     }
     
     .input-base {
-      @apply block w-full px-3 py-2 border rounded-lg shadow-sm placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-200;
+      display: block !important;
+      width: 100% !important;
+      padding: 0.5rem 0.75rem !important;
+      border: 1px solid #d1d5db !important;
+      border-radius: 0.5rem !important;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+      background-color: white !important;
+      color: #374151 !important;
+      transition: all 0.2s ease-in-out !important;
+      font-size: 1rem !important;
+      line-height: 1.5rem !important;
+    }
+    
+    .input-base::placeholder {
+      color: #9ca3af !important;
+      opacity: 1 !important;
     }
     
     .input-default {
-      @apply border-secondary-300 focus:border-primary-500 focus:ring-primary-500;
+      border-color: #d1d5db !important;
+    }
+
+    .input-default:focus {
+      outline: none !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
     }
     
     .input-error {
-      @apply border-red-300 focus:border-red-500 focus:ring-red-500;
+      border-color: #fca5a5 !important;
+    }
+
+    .input-error:focus {
+      outline: none !important;
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
     }
     
     .input-disabled {
-      @apply bg-secondary-50 text-secondary-500 cursor-not-allowed;
+      background-color: #f3f4f6 !important;
+      color: #6b7280 !important;
+      cursor: not-allowed !important;
     }
     
     .input-icon {
@@ -106,7 +149,7 @@ export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'sear
     }
     
     .input-with-icon {
-      @apply pr-10;
+      padding-right: 2.5rem !important;
     }
     
     .input-error {
@@ -122,7 +165,8 @@ export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'sear
     }
 
     textarea.input-base {
-      @apply resize-y min-h-[80px];
+      resize: vertical !important;
+      min-height: 80px !important;
     }
   `],
   providers: [

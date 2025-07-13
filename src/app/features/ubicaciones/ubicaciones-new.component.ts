@@ -70,7 +70,7 @@ import { UbicacionService, Ubicacion, CreateUbicacionRequest, SearchUbicacionPar
                 maxlength="50"
                 (blur)="validateDepartamentoUniqueness()"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                [class.border-red-500]="departamentoExists()"
+                [class.border-red-500]="departamentoExists"
                 placeholder="Ingrese el nombre del departamento"
               >
               <div class="text-xs text-gray-500 mt-1">
@@ -86,7 +86,7 @@ import { UbicacionService, Ubicacion, CreateUbicacionRequest, SearchUbicacionPar
                   }
                 </div>
               }
-              @if (departamentoExists()) {
+              @if (departamentoExists) {
                 <div class="text-red-500 text-sm mt-1">
                   <p>Este departamento ya existe</p>
                 </div>
@@ -378,7 +378,7 @@ import { UbicacionService, Ubicacion, CreateUbicacionRequest, SearchUbicacionPar
   `]
 })
 export class UbicacionesComponent implements OnInit {
-  public readonly ubicacionService = inject(UbicacionService);
+  private ubicacionService = inject(UbicacionService);
 
   // Signals para el estado del componente
   resultadosBusqueda = signal<Ubicacion[]>([]);

@@ -1,6 +1,7 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { InputComponent } from '../../shared/components/atoms/input/input.component';
 
 interface UsuarioVendedor {
   id?: number;
@@ -18,7 +19,7 @@ interface UsuarioVendedor {
 @Component({
   selector: 'app-usuarios-vendedores',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, InputComponent],
   template: `
     <div class="usuarios-vendedores-page">
       <!-- Header -->
@@ -287,7 +288,7 @@ interface UsuarioVendedor {
   `]
 })
 export class UsuariosVendedoresComponent {
-  private fb = inject(FormBuilder);
+  private readonly fb = inject(FormBuilder);
   
   showForm = signal(false);
   isSubmitting = signal(false);
@@ -323,7 +324,7 @@ export class UsuariosVendedoresComponent {
     nombre: ['', [Validators.required]],
     apellido: ['', [Validators.required]],
     documento: ['', [Validators.required, Validators.pattern(/^\d+$/)]],
-    celular: ['', [Validators.required, Validators.maxLength(13), Validators.pattern(/^[\+]?[\d\s\-\(\)]+$/)]],
+    celular: ['', [Validators.required, Validators.maxLength(13), Validators.pattern(/^[+]?[\d\s-()]+$/)]],
     fechaNacimiento: ['', [Validators.required, this.ageValidator]],
     correo: ['', [Validators.required, Validators.email]],
     clave: ['', [Validators.required, Validators.minLength(6)]]

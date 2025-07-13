@@ -1,205 +1,282 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, inject, OnInit, signal, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-}
+import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
+import { CategoryService, Category } from '../../core/services/category.service';
+import { AlertService } from '../../shared/services/alert.service';
+import { CategoryFormComponent } from '../../shared/components/organisms/category-form/category-form.component';
+import { DataTableComponent, TableColumn, TableAction } from '../../shared/components/molecules/data-table/data-table.component';
+import { PaginationComponent } from '../../shared/components/molecules/pagination/pagination.component';
 
 @Component({
   selector: 'app-categorias',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `    <!-- Contenido específico de categorías - sin layout duplicado -->
-    <div class="categorias-content">
-      <!-- Formulario de crear categoría -->
-      <div class="mb-8">
-        <h1 class="text-2xl font-semibold text-gray-900 mb-6">Crear Categoría</h1>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Nombre de la Categoría
-                <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                formControlName="name"
-                placeholder="Escribe el nombre de la categoría (máximo 50 caracteres)"
-                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-400"
-                maxlength="50">
-            </div>
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Descripción
-                <span class="text-red-500">*</span>
-              </label>
-              <div class="relative">
-                <textarea
-                  formControlName="description"
-                  placeholder="Describe la categoría..."
-                  rows="4"
-                  maxlength="90"
-                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-400 resize-none"
-                  (input)="updateCharCount()"></textarea>
-              </div>
-              <div class="flex justify-end mt-1 text-sm text-gray-500">
-                <span>{{ characterCount() }}</span>
-                <span>/90</span>
-              </div>
-            </div>
-            <div class="flex justify-end">
-              <button
-                type="submit"
-                [disabled]="!categoryForm.valid"
-                class="px-6 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                Crear Categoría
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+  imports: [
+    CommonModule,
+    FormsModule,
+    CategoryFormComponent,
+    DataTableComponent,
+    PaginationComponent
+  ],
+  template: `
+    <div class="min-h-screen bg-gray-50">
+      <!-- Main Content -->
+      <main class="ml-64 pt-16 p-6">
+        <div class="max-w-7xl mx-auto">
+          
+          <!-- Page Title -->
+          <div class="mb-8">
+            <h1 class="text-2xl font-semibold text-gray-900">Gestión de Categorías</h1>
+            <p class="text-gray-600 mt-1">Crear y administrar categorías de inmuebles</p>
+          </div>
 
-      <!-- Lista de categorías existentes -->
-      <div>
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">Categorías Existentes</h2>        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <table class="min-w-full">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              @for (category of categories; track category.id) {
-                <tr class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ category.id }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ category.name }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-600">{{ category.description }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button class="text-primary-600 hover:text-primary-700 mr-4" title="Editar">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button class="text-red-600 hover:text-red-700" title="Eliminar">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <polyline points="3,6 5,6 21,6"/>
-                        <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"/>
-                        <line x1="10" y1="11" x2="10" y2="17"/>
-                        <line x1="14" y1="11" x2="14" y2="17"/>
-                      </svg>
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+          <!-- Category Form -->
+          <div class="mb-8">
+            <app-category-form
+              (categoryCreated)="onCategoryCreated()"
+            ></app-category-form>
+          </div>
+
+          <!-- Categories List Section -->
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-lg font-medium text-gray-900">Categorías existentes</h2>
+              
+              <!-- HU #2: Controles de filtro y búsqueda -->
+              <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                  <label for="active-filter" class="text-sm text-gray-600">Estado:</label>
+                  <select 
+                    id="active-filter"
+                    [(ngModel)]="filterOptions.activeOnly"
+                    (change)="onFilterChange()"
+                    class="border border-gray-300 rounded-md px-3 py-1 text-sm"
+                  >
+                    <option [value]="true">Solo activas</option>
+                    <option [value]="false">Todas</option>
+                  </select>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                  <label for="sort-order" class="text-sm text-gray-600">Orden:</label>
+                  <select 
+                    id="sort-order"
+                    [(ngModel)]="filterOptions.sortOrder"
+                    (change)="onFilterChange()"
+                    class="border border-gray-300 rounded-md px-3 py-1 text-sm"
+                  >
+                    <option value="asc">A-Z</option>
+                    <option value="desc">Z-A</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <input 
+                    type="text"
+                    [(ngModel)]="filterOptions.searchText"
+                    (input)="onFilterChange()"
+                    placeholder="Buscar categorías..."
+                    class="border border-gray-300 rounded-md px-3 py-1 text-sm w-48"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Categories Table -->
+            <app-data-table
+              [columns]="tableColumns"
+              [data]="paginatedCategories()"
+              [actions]="tableActions"
+              [emptyMessage]="getEmptyMessage()"
+              (actionClick)="onTableAction($event)"
+            ></app-data-table>
+
+            <!-- HU #2: Paginación completa -->
+            <div class="mt-6 flex justify-between items-center">
+              <div class="text-sm text-gray-600">
+                Mostrando {{ getStartIndex() + 1 }} - {{ getEndIndex() }} de {{ getTotalFilteredItems() }} categorías
+              </div>
+              
+              <app-pagination
+                [currentPage]="currentPage()"
+                [totalPages]="getTotalPages()"
+                [maxVisiblePages]="5"
+                (pageChange)="onPageChange($event)"
+              ></app-pagination>
+            </div>
+          </div>
+
         </div>
-        
-        <!-- Paginación -->
-        <nav class="flex justify-center mt-6 space-x-2">
-          <button class="px-3 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg">1</button>
-          <button class="px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">2</button>
-          <button class="px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">3</button>
-          <button class="px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">4</button>
-          <button class="px-3 py-2 bg-white border border-gray-300 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <polyline points="9,18 15,12 9,6"/>
-            </svg>
-          </button>
-        </nav>
-      </div>
+      </main>
     </div>
-  `,
-  styles: [`
-    .categorias-content {
-      @apply max-w-6xl mx-auto;
-    }
-
-    /* Form styles */
-    .form-section {
-      @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
-    }
-
-    /* Table styles */
-    .table-container {
-      @apply bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden;
-    }
-
-    /* Custom button styles */
-    .btn-primary {
-      @apply px-6 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
-    }
-
-    .btn-secondary {
-      @apply px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors;
-    }
-
-    /* Action buttons */
-    .action-btn {
-      @apply p-1 rounded hover:bg-gray-100 transition-colors;
-    }
-
-    /* Input styles */
-    .form-input {
-      @apply w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-400 transition-colors;
-    }
-
-    .form-textarea {
-      @apply w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-gray-400 resize-none transition-colors;
-    }
-  `]
+  `
 })
-export class CategoriasComponent {
-  private readonly fb = inject(FormBuilder);
-  private readonly router = inject(Router);
-  
-  characterCount = signal(0);
-  
-  categoryForm: FormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.maxLength(50)]],
-    description: ['', [Validators.required, Validators.maxLength(90)]]
-  });
+export class CategoriasComponent implements OnInit {
+  private readonly categoryService = inject(CategoryService);
+  private readonly alertService = inject(AlertService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
 
-  categories: Category[] = [
-    {
-      id: '#CAT-2025001',
-      name: 'Casas de lujo',
-      description: 'Propiedades residenciales con acabados de lujo'
-    },
-    {
-      id: '#CAT-2025002',
-      name: 'Apartamentos',
-      description: 'Espacios modernos y urbanos'
-    }
+  // Signals
+  categories = signal<Category[]>([]);
+  filteredCategories = signal<Category[]>([]);
+  currentPage = signal(1);
+  totalPages = signal(1);
+  itemsPerPage = 10;
+
+  // HU #2: Filtros para parametrización de búsqueda
+  filterOptions = {
+    activeOnly: true,
+    sortOrder: 'asc' as 'asc' | 'desc',
+    searchText: ''
+  };
+
+  // Table configuration
+  tableColumns: TableColumn[] = [
+    { key: 'id', label: 'ID', width: 'w-32' },
+    { key: 'nombre', label: 'Name', width: 'w-48' },
+    { key: 'descripcion', label: 'Description', width: 'flex-1' }
   ];
 
-  updateCharCount(): void {
-    const description = this.categoryForm.get('description')?.value || '';
-    this.characterCount.set(description.length);
+  tableActions: TableAction[] = [
+    { icon: 'delete', label: 'Eliminar categoría', color: 'red', action: 'delete' }
+  ];
+
+  constructor() {
+    // Set up alert service with view container
+    this.alertService.setViewContainerRef(this.viewContainerRef);
   }
 
-  onSubmit(): void {
-    if (this.categoryForm.valid) {
-      const formValue = this.categoryForm.value;
-      const newCategory: Category = {
-        id: `#CAT-${new Date().getFullYear()}${String(this.categories.length + 1).padStart(3, '0')}`,
-        name: formValue.name,
-        description: formValue.description
-      };
-      
-      this.categories.unshift(newCategory);
-      this.categoryForm.reset();
-      this.characterCount.set(0);
-      
-      console.log('Category created:', newCategory);
+  ngOnInit() {
+    this.loadCategories();
+  }
+
+  async loadCategories() {
+    try {
+      const allCategories = await firstValueFrom(this.categoryService.getCategories());
+      this.categories.set(allCategories);
+      this.applyFilters();
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      await this.alertService.error('Error', 'Error al cargar las categorías');
     }
+  }
+
+  // HU #2: Aplicar filtros y ordenamiento
+  applyFilters() {
+    let filtered = [...this.categories()];
+
+    // Filtrar por estado activo
+    if (this.filterOptions.activeOnly) {
+      filtered = filtered.filter(cat => cat.activo);
+    }
+
+    // Filtrar por texto de búsqueda
+    if (this.filterOptions.searchText.trim()) {
+      const searchTerm = this.filterOptions.searchText.toLowerCase().trim();
+      filtered = filtered.filter(cat => 
+        cat.nombre.toLowerCase().includes(searchTerm) ||
+        cat.descripcion.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Ordenar
+    filtered.sort((a, b) => {
+      const comparison = a.nombre.localeCompare(b.nombre);
+      return this.filterOptions.sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    this.filteredCategories.set(filtered);
+    this.updatePagination();
+  }
+
+  onFilterChange() {
+    this.currentPage.set(1); // Reset a la primera página
+    this.applyFilters();
+  }
+
+  onCategoryCreated() {
+    this.loadCategories();
+  }
+
+  async onTableAction(event: {action: string, item: Category}) {
+    if (event.action === 'delete') {
+      await this.deleteCategory(event.item);
+    }
+  }
+
+  async deleteCategory(category: Category) {
+    const confirmed = await this.alertService.confirm(
+      'Confirmar eliminación',
+      `¿Estás seguro de que deseas eliminar la categoría "${category.nombre}"?`,
+      'Eliminar',
+      'Cancelar'
+    );
+
+    if (confirmed) {
+      try {
+        await firstValueFrom(this.categoryService.deleteCategory(category.id));
+        
+        await this.alertService.success(
+          'Éxito',
+          `Categoría "${category.nombre}" eliminada exitosamente`
+        );
+
+        await this.loadCategories();
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        await this.alertService.error(
+          'Error',
+          'Error al eliminar la categoría. Por favor intenta nuevamente.'
+        );
+      }
+    }
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+  }
+
+  paginatedCategories() {
+    const startIndex = (this.currentPage() - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.filteredCategories().slice(startIndex, endIndex);
+  }
+
+  updatePagination() {
+    const totalItems = this.filteredCategories().length;
+    this.totalPages.set(Math.ceil(totalItems / this.itemsPerPage));
+    
+    // Reset to page 1 if current page is beyond available pages
+    if (this.currentPage() > this.totalPages()) {
+      this.currentPage.set(1);
+    }
+  }
+
+  // HU #2: Métodos auxiliares para la paginación
+  getTotalPages(): number {
+    return this.totalPages();
+  }
+
+  getTotalFilteredItems(): number {
+    return this.filteredCategories().length;
+  }
+
+  getStartIndex(): number {
+    return (this.currentPage() - 1) * this.itemsPerPage;
+  }
+
+  getEndIndex(): number {
+    const endIndex = this.getStartIndex() + this.itemsPerPage;
+    return Math.min(endIndex, this.getTotalFilteredItems());
+  }
+
+  getEmptyMessage(): string {
+    if (this.filterOptions.searchText.trim()) {
+      return `No se encontraron categorías que coincidan con "${this.filterOptions.searchText}"`;
+    }
+    if (!this.filterOptions.activeOnly) {
+      return 'No hay categorías registradas';
+    }
+    return 'No hay categorías activas registradas';
   }
 }

@@ -89,53 +89,72 @@ export const routes: Routes = [
     ]
   },
   
-  // Seller routes - HU #6, #9
+  // Seller routes - HU #6, #9 with shared layout
   {
-    path: 'vendedor/dashboard',
+    path: 'vendedor',
     canActivate: [AuthGuard],
     data: { role: UserRole.VENDEDOR },
-    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    title: 'Dashboard Vendedor - Hogar360'
-  },
-  // HU #6: Publicar casa (solo Vendedor)
-  {
-    path: 'vendedor/propiedades',
-    canActivate: [AuthGuard],
-    data: { role: UserRole.VENDEDOR },
-    loadComponent: () => import('./features/properties/properties.component').then(m => m.PropertiesComponent),
-    title: 'Mis Propiedades - Hogar360'
-  },
-  // HU #9: Disponibilizar horarios de visitas (solo Vendedor)
-  {
-    path: 'vendedor/horarios-visitas',
-    canActivate: [AuthGuard],
-    data: { role: UserRole.VENDEDOR },
-    loadComponent: () => import('./features/visit-schedules/visit-schedules.component').then(m => m.VisitSchedulesComponent),
-    title: 'Horarios de Visitas - Hogar360'
+    loadComponent: () => import('./layout/user-layout/user-layout.component').then(m => m.UserLayoutComponent),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard-content/dashboard-content.component').then(m => m.DashboardContentComponent),
+        title: 'Dashboard Vendedor - Hogar360'
+      },
+      // HU #6: Publicar casa (solo Vendedor)
+      {
+        path: 'propiedades',
+        loadComponent: () => import('./features/properties/properties.component').then(m => m.PropertiesComponent),
+        title: 'Mis Propiedades - Hogar360'
+      },
+      // HU #9: Disponibilizar horarios de visitas (solo Vendedor)
+      {
+        path: 'horarios-visitas',
+        loadComponent: () => import('./features/visit-schedules/visit-schedules.component').then(m => m.VisitSchedulesComponent),
+        title: 'Horarios de Visitas - Hogar360'
+      },
+      {
+        path: 'configuracion',
+        loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
+        title: 'Configuración - Hogar360'
+      },
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      }
+    ]
   },
   
-  // Buyer routes - HU #11
+  // Buyer routes - HU #11 with shared layout
   {
-    path: 'comprador/dashboard',
+    path: 'comprador',
     canActivate: [AuthGuard],
     data: { role: UserRole.COMPRADOR },
-    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    title: 'Dashboard Comprador - Hogar360'
-  },
-  // HU #11: Agendar visitas (solo Comprador)
-  {
-    path: 'comprador/visitas',
-    canActivate: [AuthGuard],
-    data: { role: UserRole.COMPRADOR },
-    loadComponent: () => import('./features/visits/visits.component').then(m => m.VisitsComponent),
-    title: 'Mis Visitas Agendadas - Hogar360'
-  },
-  {
-    path: 'comprador/agendar-visita',
-    canActivate: [AuthGuard],
-    data: { role: UserRole.COMPRADOR },
-    loadComponent: () => import('./features/schedule-visit/schedule-visit.component').then(m => m.ScheduleVisitComponent),
-    title: 'Agendar Visita - Hogar360'
+    loadComponent: () => import('./layout/user-layout/user-layout.component').then(m => m.UserLayoutComponent),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard-content/dashboard-content.component').then(m => m.DashboardContentComponent),
+        title: 'Dashboard Comprador - Hogar360'
+      },
+      // HU #11: Agendar visitas (solo Comprador)
+      {
+        path: 'visitas',
+        loadComponent: () => import('./features/visits/visits.component').then(m => m.VisitsComponent),
+        title: 'Mis Visitas Agendadas - Hogar360'
+      },
+      {
+        path: 'agendar-visita',
+        loadComponent: () => import('./features/schedule-visit/schedule-visit.component').then(m => m.ScheduleVisitComponent),
+        title: 'Agendar Visita - Hogar360'
+      },
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      }
+    ]
   },
   
   // Catch all route

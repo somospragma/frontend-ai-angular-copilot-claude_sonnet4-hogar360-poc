@@ -10,7 +10,7 @@ export type LogoVariant = 'default' | 'white' | 'minimal';
   imports: [CommonModule],
   template: `
     <div [class]="getLogoClasses()" [attr.aria-label]="'Logo de ' + appName">
-      <!-- Logo Hogar360 estilo Figma - solo texto -->
+      <!-- Logo Hogar360 estilo Figma -->
       <span class="app-name" [style.color]="getTextColor()">{{ appName }}</span>
       <span *ngIf="showTagline && size !== 'sm'" class="tagline" [style.color]="getSubtextColor()">
         {{ tagline }}
@@ -23,38 +23,40 @@ export type LogoVariant = 'default' | 'white' | 'minimal';
     }
 
     .app-name {
-      @apply font-sans font-medium leading-none;
+      @apply font-semibold leading-none;
+      font-family: 'Poppins', sans-serif;
     }
 
     .tagline {
-      @apply font-sans text-xs leading-tight opacity-80 ml-2;
+      @apply font-normal text-xs leading-tight opacity-80 ml-2;
+      font-family: 'Poppins', sans-serif;
     }
 
-    /* Tamaños */
+    /* Tamaños siguiendo el diseño de Figma */
     .logo-sm .app-name {
-      @apply text-sm;
+      @apply text-base; /* 16px */
     }
 
     .logo-md .app-name {
-      @apply text-lg;
+      @apply text-xl; /* 20px */
     }
 
     .logo-lg .app-name {
-      @apply text-xl;
+      @apply text-2xl; /* 24px */
     }
 
     .logo-xl .app-name {
-      @apply text-2xl;
+      @apply text-3xl; /* 30px */
     }
 
     /* Responsive */
     @media (max-width: 640px) {
       .logo-lg .app-name {
-        @apply text-lg;
+        @apply text-xl;
       }
       
       .logo-xl .app-name {
-        @apply text-xl;
+        @apply text-2xl;
       }
     }
   `],
@@ -76,9 +78,9 @@ export class LogoComponent {
       case 'white':
         return '#ffffff';
       case 'minimal':
-        return '#5f6368'; // neutral-700
+        return '#4B5563'; // neutral-600
       default:
-        return '#4285F4'; // primary-500 del diseño Figma
+        return '#2563EB'; // blue-600 del diseño Figma
     }
   }
 
@@ -87,9 +89,9 @@ export class LogoComponent {
       case 'white':
         return '#e0f2fe';
       case 'minimal':
-        return '#9aa0a6'; // neutral-500
+        return '#9CA3AF'; // neutral-400
       default:
-        return '#80868b'; // neutral-600
+        return '#6B7280'; // neutral-500
     }
   }
 }
