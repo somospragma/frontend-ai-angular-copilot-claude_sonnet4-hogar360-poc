@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { AuthService } from '../../../../core/services/auth.service';
+import { AuthFacade } from '../../../../core/facades/auth.facade';
 import { LoginRequest } from '../../../../core/interfaces';
 import { PATTERNS, VALIDATION_RULES, MESSAGES } from '../../../../core/constants';
 import { ButtonComponent } from '../../atoms/button/button.component';
@@ -60,11 +60,11 @@ import { InputComponent } from '../../atoms/input/input.component';
             variant="primary"
             size="lg"
             [fullWidth]="true"
-            [loading]="authService.isLoading()"
-            [disabled]="loginForm.invalid || authService.isLoading()"
+            [loading]="(authFacade.isLoading$ | async) || false"
+            [disabled]="loginForm.invalid || (authFacade.isLoading$ | async) || false"
           >
-            <span *ngIf="!authService.isLoading()">Iniciar Sesión</span>
-            <span *ngIf="authService.isLoading()">Iniciando sesión...</span>
+            <span *ngIf="!(authFacade.isLoading$ | async)">Iniciar Sesión</span>
+            <span *ngIf="(authFacade.isLoading$ | async)">Iniciando sesión...</span>
           </app-button>
         </div>
       </form>
@@ -132,7 +132,7 @@ import { InputComponent } from '../../atoms/input/input.component';
 export class LoginFormComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
-  readonly authService = inject(AuthService);
+  readonly authFacade = inject(AuthFacade);
 
   // Signals
   readonly errorMessage = signal<string>('');
@@ -166,13 +166,13 @@ export class LoginFormComponent {
         clave: this.loginForm.get('clave')?.value
       };
 
-      this.authService.login(credentials).subscribe({
-        next: (response) => {
-          // Navigation is handled by the auth service
-          console.log('Login successful:', response);
-        },
-        error: (error) => {
-          this.errorMessage.set(error.message || MESSAGES.ERROR.GENERIC);
+      // Use AuthFacade for login - it handles the flow through NgRx
+      this.authFacade.login(credentials);
+      
+      // Subscribe to errors to show them
+      this.authFacade.error$.subscribe(error => {
+        if (error) {
+          this.errorMessage.set(error);
         }
       });
     } else {

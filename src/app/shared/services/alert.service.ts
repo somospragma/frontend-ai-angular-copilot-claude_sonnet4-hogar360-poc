@@ -5,9 +5,9 @@ import { CustomAlertComponent, AlertData } from '../components/custom-alert/cust
   providedIn: 'root'
 })
 export class AlertService {
-  private environmentInjector = inject(EnvironmentInjector);
+  private readonly environmentInjector = inject(EnvironmentInjector);
   private viewContainerRef?: ViewContainerRef;
-  private activeAlerts = signal<ComponentRef<CustomAlertComponent>[]>([]);
+  private readonly activeAlerts = signal<ComponentRef<CustomAlertComponent>[]>([]);
 
   setViewContainerRef(viewContainerRef: ViewContainerRef): void {
     this.viewContainerRef = viewContainerRef;

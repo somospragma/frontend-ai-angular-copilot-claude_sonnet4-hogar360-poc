@@ -1,5 +1,5 @@
 import { Category } from './category.interface';
-import { Location } from './location.interface';
+import { Ubicacion } from './ubicacion.interface';
 import { User } from './user.interface';
 
 export interface Property {
@@ -10,7 +10,7 @@ export interface Property {
   cantidad_cuartos: number;
   cantidad_banos: number;
   precio: number;
-  ubicacion: Location;
+  ubicacion: Ubicacion;
   fecha_publicacion_activa: Date;
   estado_publicacion: PropertyStatus;
   fecha_publicacion: Date;

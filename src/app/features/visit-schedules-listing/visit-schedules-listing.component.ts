@@ -5,7 +5,8 @@ import { RouterModule } from '@angular/router';
 
 import { VisitService } from '../../core/services/visit.service';
 import { UbicacionService } from '../../core/services/ubicacion.service';
-import { VisitSchedule } from '../../core/interfaces';
+import { AuthFacade } from '../../core/facades/auth.facade';
+import { VisitSchedule, UserRole } from '../../core/interfaces';
 import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
 
 @Component({
@@ -16,7 +17,12 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
     <div class="min-h-screen bg-gray-50 py-8">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h1 class="text-2xl font-bold text-gray-900 mb-6">Horarios de Visitas Disponibles</h1>
+          <h1 class="text-2xl font-bold text-gray-900 mb-2">
+            Horarios de Visitas Disponibles - HU #10
+          </h1>
+          <p class="text-gray-600 mb-6">
+            Todos los roles pueden ver y filtrar horarios de visitas disponibles
+          </p>
           
           <!-- Filtros de búsqueda - HU #10 -->
           <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="mb-8">
@@ -173,6 +179,7 @@ export class VisitSchedulesListingComponent implements OnInit {
   private readonly visitService = inject(VisitService);
   private readonly ubicacionService = inject(UbicacionService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly authFacade = inject(AuthFacade);
 
   schedules = signal<VisitSchedule[]>([]);
   ubicaciones = signal<Ubicacion[]>([]);
@@ -198,6 +205,22 @@ export class VisitSchedulesListingComponent implements OnInit {
   ngOnInit(): void {
     this.loadUbicaciones();
     this.loadAvailableSchedules();
+  }
+
+  // HU #10: Verificar roles - todos los roles pueden ver horarios
+  isAdmin(): boolean {
+    const user = this.authFacade.getCurrentUser();
+    return user?.role === UserRole.ADMIN;
+  }
+
+  isVendedor(): boolean {
+    const user = this.authFacade.getCurrentUser();
+    return user?.role === UserRole.VENDEDOR;
+  }
+
+  isComprador(): boolean {
+    const user = this.authFacade.getCurrentUser();
+    return user?.role === UserRole.COMPRADOR;
   }
 
   private loadUbicaciones(): void {

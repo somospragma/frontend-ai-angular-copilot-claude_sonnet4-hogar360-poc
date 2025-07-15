@@ -37,7 +37,7 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
                 class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 <option value="">Todas las ubicaciones</option>
                 @for (ubicacion of ubicaciones(); track ubicacion.id) {
-                  <option [value]="ubicacion.id">{{ ubicacion.ciudad.nombre }}, {{ ubicacion.departamento.nombre }}</option>
+                  <option [value]="ubicacion.id">{{ ubicacion.ciudad }}, {{ ubicacion.departamento }}</option>
                 }
               </select>
             </div>
@@ -330,17 +330,21 @@ export class PropertyListingComponent implements OnInit {
     this.ubicaciones.set([
       { 
         id: 1, 
-        ciudad: { id: 1, nombre: 'Medellín' } as any,
-        departamento: { id: 1, nombre: 'Antioquia' } as any,
-        ciudadId: 1,
-        departamentoId: 1
+        ciudad: 'Medellín',
+        departamento: 'Antioquia',
+        descripcionCiudad: 'Ciudad de la eterna primavera',
+        descripcionDepartamento: 'Departamento de Antioquia',
+        fechaCreacion: new Date(),
+        activo: true
       },
       { 
         id: 2, 
-        ciudad: { id: 2, nombre: 'Bogotá' } as any,
-        departamento: { id: 2, nombre: 'Cundinamarca' } as any,
-        ciudadId: 2,
-        departamentoId: 2
+        ciudad: 'Bogotá',
+        departamento: 'Cundinamarca',
+        descripcionCiudad: 'Capital de Colombia',
+        descripcionDepartamento: 'Departamento de Cundinamarca',
+        fechaCreacion: new Date(),
+        activo: true
       }
     ]);
   }

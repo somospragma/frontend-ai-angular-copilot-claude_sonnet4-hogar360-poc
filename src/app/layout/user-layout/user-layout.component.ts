@@ -2,7 +2,7 @@ import { Component, inject, ChangeDetectionStrategy, signal, OnInit, HostListene
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 
-import { AuthService } from '../../core/services/auth.service';
+import { AuthFacade } from '../../core/facades/auth.facade';
 import { LogoComponent } from '../../shared/components/atoms/logo/logo.component';
 import { ButtonComponent } from '../../shared/components/atoms/button/button.component';
 import { UserRole } from '../../core/interfaces';
@@ -39,7 +39,7 @@ import { UserRole } from '../../core/interfaces';
             </li>
 
             <!-- Opciones de Admin -->
-            @if (userRole() === UserRole.ADMIN) {
+            @if (isAdmin()) {
               <li>
                 <a class="nav-item" 
                    [class.active]="isActiveRoute('/admin/categorias')"
@@ -78,7 +78,7 @@ import { UserRole } from '../../core/interfaces';
             }
 
             <!-- Opciones de Vendedor -->
-            @if (userRole() === UserRole.VENDEDOR) {
+            @if (isVendedor()) {
               <li>
                 <a class="nav-item" 
                    [class.active]="isActiveRoute('/vendedor/propiedades')"
@@ -104,7 +104,7 @@ import { UserRole } from '../../core/interfaces';
             }
 
             <!-- Opciones de Comprador -->
-            @if (userRole() === UserRole.COMPRADOR) {
+            @if (isComprador()) {
               <li>
                 <a class="nav-item" 
                    [class.active]="isActiveRoute('/propiedades')"
@@ -144,7 +144,7 @@ import { UserRole } from '../../core/interfaces';
             }
 
             <!-- Configuración común para Admin y Vendedor -->
-            @if (userRole() === UserRole.ADMIN || userRole() === UserRole.VENDEDOR) {
+            @if (isAdminOrVendedor()) {
               <li>
                 <a class="nav-item" 
                    [class.active]="isActiveRoute('configuracion')"
@@ -370,19 +370,19 @@ import { UserRole } from '../../core/interfaces';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserLayoutComponent implements OnInit {
-  private readonly authService = inject(AuthService);
+  private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
 
-  currentUser = this.authService.currentUser;
+  currentUser = this.authFacade.user$;
   dropdownOpen = signal(false);
-  userRole = this.authService.userRole;
+  userRole = this.authFacade.userRole$;
 
   // Exponer UserRole para usarlo en el template
   UserRole = UserRole;
 
   ngOnInit(): void {
     // Verificar autenticación al inicializar
-    if (!this.authService.isAuthenticated()) {
+    if (!this.authFacade.getIsAuthenticated()) {
       this.router.navigate(['/login']);
     }
   }
@@ -409,15 +409,15 @@ export class UserLayoutComponent implements OnInit {
   }
 
   getUserName(): string {
-    return this.currentUser()?.nombre || 'Usuario';
+    return this.authFacade.getCurrentUser()?.nombre || 'Usuario';
   }
 
   getUserRole(): string {
-    return this.currentUser()?.role || 'user';
+    return this.authFacade.getCurrentUser()?.role || 'user';
   }
 
   getUserAvatar(): string {
-    return this.currentUser()?.avatar || '/assets/images/avatar.jpg';
+    return this.authFacade.getCurrentUser()?.avatar || '/assets/images/avatar.jpg';
   }
 
   isActiveRoute(route: string): boolean {
@@ -437,7 +437,7 @@ export class UserLayoutComponent implements OnInit {
 
   navigateToUserDashboard(event?: Event): void {
     event?.preventDefault();
-    const role = this.userRole();
+    const role = this.authFacade.getUserRole();
     switch (role) {
       case UserRole.ADMIN:
         this.router.navigate(['/admin/dashboard']);
@@ -456,7 +456,7 @@ export class UserLayoutComponent implements OnInit {
 
   navigateToSettings(event?: Event): void {
     event?.preventDefault();
-    const role = this.userRole();
+    const role = this.authFacade.getUserRole();
     if (role === UserRole.ADMIN) {
       this.router.navigate(['/admin/configuracion']);
     } else {
@@ -477,10 +477,28 @@ export class UserLayoutComponent implements OnInit {
     this.router.navigate(['/perfil']);
   }
 
+  // Helper methods for template
+  isAdmin(): boolean {
+    return this.authFacade.getUserRole() === UserRole.ADMIN;
+  }
+
+  isVendedor(): boolean {
+    return this.authFacade.getUserRole() === UserRole.VENDEDOR;
+  }
+
+  isComprador(): boolean {
+    return this.authFacade.getUserRole() === UserRole.COMPRADOR;
+  }
+
+  isAdminOrVendedor(): boolean {
+    const role = this.authFacade.getUserRole();
+    return role === UserRole.ADMIN || role === UserRole.VENDEDOR;
+  }
+
   logout(event?: Event): void {
     event?.preventDefault();
     this.dropdownOpen.set(false);
-    this.authService.logout();
+    this.authFacade.logout();
     this.router.navigate(['/']);
   }
 }

@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { VisitService } from '../../core/services/visit.service';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthFacade } from '../../core/facades/auth.facade';
 import { VisitSchedule, VisitRequest } from '../../core/interfaces';
 
 @Component({
@@ -145,7 +145,7 @@ import { VisitSchedule, VisitRequest } from '../../core/interfaces';
 })
 export class ScheduleVisitComponent implements OnInit {
   private readonly visitService = inject(VisitService);
-  private readonly authService = inject(AuthService);
+  private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
@@ -170,7 +170,7 @@ export class ScheduleVisitComponent implements OnInit {
     }
 
     // Pre-llenar el email si el usuario está autenticado
-    const currentUser = this.authService.currentUser();
+    const currentUser = this.authFacade.getCurrentUser();
     if (currentUser?.correo) {
       this.visitForm.patchValue({
         compradorEmail: currentUser.correo

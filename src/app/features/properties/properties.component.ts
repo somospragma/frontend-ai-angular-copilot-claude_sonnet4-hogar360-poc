@@ -1,12 +1,15 @@
-import { Component, signal, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, signal, inject, OnInit, ChangeDetectionStrategy, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { PropertyService } from '../../core/services/property.service';
-import { CategoriaService } from '../../core/services/categoria.service';
+import { AuthFacade } from '../../core/facades/auth.facade';
+import { UserRole } from '../../core/interfaces';
+import { CategoryService } from '../../core/services/category.service';
 import { UbicacionService } from '../../core/services/ubicacion.service';
+import { AlertService } from '../../shared/services/alert.service';
 import { Property, PropertyStatus, PropertyRequest } from '../../core/interfaces/property.interface';
-import { Categoria } from '../../core/interfaces/categoria.interface';
+import { Category } from '../../core/interfaces/category.interface';
 import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
 
 @Component({
@@ -17,33 +20,41 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
     <div class="properties-page">
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-secondary-900">Gestión de Propiedades</h1>
+        <h1 class="text-2xl font-bold text-secondary-900">
+          @if (isVendedor()) {
+            Gestión de Propiedades
+          } @else {
+            Propiedades Disponibles
+          }
+        </h1>
         <div class="flex gap-2">
           <button 
             (click)="reloadProperties()"
             class="bg-secondary-600 text-white px-4 py-2 rounded-lg hover:bg-secondary-700 transition-colors font-medium">
             Recargar
           </button>
-          <button 
-            (click)="toggleForm()"
-            class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium">
-            @if (showForm()) {
-              Cancelar
-            } @else {
-              Nueva Propiedad
-            }
-          </button>
+          @if (isVendedor()) {
+            <button 
+              (click)="toggleForm()"
+              class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium">
+              @if (showForm()) {
+                Cancelar
+              } @else {
+                Nueva Propiedad
+              }
+            </button>
+          }
         </div>
       </div>
 
-      <!-- Form Section -->
-      @if (showForm()) {
+      <!-- Form Section - HU #6: Solo Vendedor puede publicar casa -->
+      @if (showForm() && isVendedor()) {
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 class="text-lg font-semibold text-secondary-900 mb-4">
             @if (editingProperty()) {
               Editar Propiedad
             } @else {
-              Nueva Propiedad
+              Publicar Nueva Propiedad - HU #6
             }
           </h2>
           
@@ -146,7 +157,7 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
                   class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                   <option value="">Selecciona una ubicación</option>
                   @for (ubicacion of ubicaciones(); track ubicacion.id) {
-                    <option [value]="ubicacion.id">{{ ubicacion.ciudad.nombre }}, {{ ubicacion.departamento.nombre }}</option>
+                    <option [value]="ubicacion.id">{{ ubicacion.ciudad }}, {{ ubicacion.departamento }}</option>
                   }
                 </select>
               </div>
@@ -234,17 +245,25 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
         </div>
       }
 
-      <!-- Properties List -->
+      <!-- Properties List - HU #7: Todos los roles pueden listar casas -->
       <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <div class="px-6 py-4 border-b border-secondary-200">
           <h2 class="text-lg font-semibold text-secondary-900">
-            Mis Propiedades ({{ properties().length }})
+            @if (isVendedor()) {
+              Mis Propiedades ({{ properties().length }})
+            } @else {
+              Propiedades Disponibles - HU #7 ({{ properties().length }})
+            }
           </h2>
         </div>
 
         @if (properties().length === 0) {
           <div class="p-6 text-center text-secondary-600">
-            No tienes propiedades registradas.
+            @if (isVendedor()) {
+              No tienes propiedades registradas.
+            } @else {
+              No hay propiedades disponibles en este momento.
+            }
           </div>
         } @else {
           <div class="overflow-x-auto">
@@ -295,16 +314,27 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button 
-                        (click)="editProperty(property)"
-                        class="text-primary-600 hover:text-primary-700 transition-colors">
-                        Editar
-                      </button>
-                      <button 
-                        (click)="deleteProperty(property.id)"
-                        class="text-red-600 hover:text-red-700 transition-colors ml-2">
-                        Eliminar
-                      </button>
+                      @if (isVendedor()) {
+                        <button 
+                          (click)="editProperty(property)"
+                          class="text-primary-600 hover:text-primary-700 transition-colors">
+                          Editar
+                        </button>
+                        <button 
+                          (click)="deleteProperty(property.id)"
+                          class="text-red-600 hover:text-red-700 transition-colors ml-2">
+                          Eliminar
+                        </button>
+                      } @else {
+                        <button 
+                          class="text-primary-600 hover:text-primary-700 transition-colors">
+                          Ver Detalles
+                        </button>
+                        <button 
+                          class="text-green-600 hover:text-green-700 transition-colors ml-2">
+                          Agendar Visita
+                        </button>
+                      }
                     </td>
                   </tr>
                 }
@@ -325,14 +355,17 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
 export class PropertiesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly propertyService = inject(PropertyService);
-  private readonly categoriaService = inject(CategoriaService);
+  private readonly categoryService = inject(CategoryService);
   private readonly ubicacionService = inject(UbicacionService);
+  private readonly alertService = inject(AlertService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly authFacade = inject(AuthFacade);
   
   showForm = signal(false);
   isSubmitting = signal(false);
   editingProperty = signal<Property | null>(null);
   properties = signal<Property[]>([]);
-  categorias = signal<Categoria[]>([]);
+  categorias = signal<Category[]>([]);
   ubicaciones = signal<Ubicacion[]>([]);
 
   today = new Date().toISOString().slice(0, 16);
@@ -351,49 +384,138 @@ export class PropertiesComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Configure AlertService
+    this.alertService.setViewContainerRef(this.viewContainerRef);
+    
     this.loadCategorias();
     this.loadUbicaciones();
     this.loadProperties();
     console.log('Properties loaded:', this.properties());
   }
 
+  // HU #6 y #7: Métodos para verificar roles
+  isVendedor(): boolean {
+    const user = this.authFacade.getCurrentUser();
+    return user?.role === UserRole.VENDEDOR;
+  }
+
+  isAdmin(): boolean {
+    const user = this.authFacade.getCurrentUser();
+    return user?.role === UserRole.ADMIN;
+  }
+
+  isComprador(): boolean {
+    const user = this.authFacade.getCurrentUser();
+    return user?.role === UserRole.COMPRADOR;
+  }
+
   loadCategorias(): void {
-    // Mock data - in real app would call service
-    this.categorias.set([
-      { id: 1, nombre: 'Casa', descripcion: 'Casas residenciales' },
-      { id: 2, nombre: 'Apartamento', descripcion: 'Apartamentos urbanos' },
-      { id: 3, nombre: 'Casa de lujo', descripcion: 'Propiedades premium' }
-    ]);
+    this.categoryService.getCategories().subscribe({
+      next: (categories) => {
+        this.categorias.set(categories);
+        console.log('Categories loaded from API:', categories);
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+        // Fallback to mock data
+        this.categorias.set([
+          { 
+            id: 1, 
+            nombre: 'Casa', 
+            descripcion: 'Casas residenciales',
+            activo: true,
+            fechaCreacion: new Date().toISOString()
+          },
+          { 
+            id: 2, 
+            nombre: 'Apartamento', 
+            descripcion: 'Apartamentos urbanos',
+            activo: true,
+            fechaCreacion: new Date().toISOString()
+          },
+          { 
+            id: 3, 
+            nombre: 'Casa de lujo', 
+            descripcion: 'Propiedades premium',
+            activo: true,
+            fechaCreacion: new Date().toISOString()
+          }
+        ]);
+      }
+    });
   }
 
   loadUbicaciones(): void {
-    // Mock data - in real app would call service
-    this.ubicaciones.set([
-      { 
-        id: 1, 
-        ciudad: { id: 1, nombre: 'Medellín' } as any,
-        departamento: { id: 1, nombre: 'Antioquia' } as any,
-        ciudadId: 1,
-        departamentoId: 1
+    this.ubicacionService.searchUbicaciones({}).subscribe({
+      next: (response) => {
+        // Convert the ubicacion interface to the one used in properties
+        const ubicaciones = response.ubicaciones.map(ub => ({
+          id: ub.id,
+          ciudad: ub.ciudad,
+          departamento: ub.departamento,
+          descripcionCiudad: ub.descripcionCiudad,
+          descripcionDepartamento: ub.descripcionDepartamento,
+          fechaCreacion: ub.fechaCreacion,
+          activo: ub.activo
+        }));
+        this.ubicaciones.set(ubicaciones);
+        console.log('Locations loaded from API:', ubicaciones);
       },
-      { 
-        id: 2, 
-        ciudad: { id: 2, nombre: 'Bogotá' } as any,
-        departamento: { id: 2, nombre: 'Cundinamarca' } as any,
-        ciudadId: 2,
-        departamentoId: 2
+      error: (error) => {
+        console.error('Error loading locations:', error);
+        // Fallback to mock data
+        this.ubicaciones.set([
+          { 
+            id: 1, 
+            ciudad: 'Medellín',
+            departamento: 'Antioquia',
+            descripcionCiudad: 'Ciudad de la eterna primavera',
+            descripcionDepartamento: 'Departamento de Antioquia',
+            fechaCreacion: new Date(),
+            activo: true
+          },
+          { 
+            id: 2, 
+            ciudad: 'Bogotá',
+            departamento: 'Cundinamarca',
+            descripcionCiudad: 'Capital de Colombia',
+            descripcionDepartamento: 'Departamento de Cundinamarca',
+            fechaCreacion: new Date(),
+            activo: true
+          }
+        ]);
       }
-    ]);
+    });
   }
 
   loadProperties(): void {
-    // Mock data - in real app would call propertyService.getProperties()
+    this.propertyService.getProperties().subscribe({
+      next: (response) => {
+        this.properties.set(response.data);
+        console.log('Properties loaded from API:', response.data);
+      },
+      error: (error) => {
+        console.error('Error loading properties:', error);
+        // Fallback to mock data only on error
+        this.loadMockProperties();
+      }
+    });
+  }
+
+  private loadMockProperties(): void {
+    console.log('Loading mock properties as fallback...');
     const mockProperties: Property[] = [
       {
         id: 1,
         nombre: 'Calle las vellanas',
         descripcion: 'Hermosa casa en el centro de la ciudad con excelente ubicación y acabados de primera calidad.',
-        categoria: { id: 1, nombre: 'Casa', descripcion: 'Casas residenciales' },
+        categoria: { 
+          id: 1, 
+          nombre: 'Casa', 
+          descripcion: 'Casas residenciales',
+          activo: true,
+          fechaCreacion: new Date().toISOString()
+        },
         cantidad_cuartos: 3,
         cantidad_banos: 2,
         precio: 450000000,
@@ -401,8 +523,10 @@ export class PropertiesComponent implements OnInit {
           id: 1, 
           ciudad: 'Medellín',
           departamento: 'Antioquia',
-          descripcion_ciudad: 'Ciudad de la eterna primavera',
-          descripcion_departamento: 'Departamento del noroeste de Colombia'
+          descripcionCiudad: 'Ciudad de la eterna primavera',
+          descripcionDepartamento: 'Departamento del noroeste de Colombia',
+          fechaCreacion: new Date(),
+          activo: true
         },
         fecha_publicacion_activa: new Date(),
         estado_publicacion: PropertyStatus.PUBLICADA,
@@ -415,7 +539,13 @@ export class PropertiesComponent implements OnInit {
         id: 2,
         nombre: 'Apartamento Centro',
         descripcion: 'Moderno apartamento en el corazón de la ciudad, cerca de todo.',
-        categoria: { id: 2, nombre: 'Apartamento', descripcion: 'Apartamentos urbanos' },
+        categoria: { 
+          id: 2, 
+          nombre: 'Apartamento', 
+          descripcion: 'Apartamentos urbanos',
+          activo: true,
+          fechaCreacion: new Date().toISOString()
+        },
         cantidad_cuartos: 2,
         cantidad_banos: 1,
         precio: 320000000,
@@ -423,8 +553,10 @@ export class PropertiesComponent implements OnInit {
           id: 2, 
           ciudad: 'Bogotá',
           departamento: 'Cundinamarca',
-          descripcion_ciudad: 'Capital de Colombia',
-          descripcion_departamento: 'Departamento central de Colombia'
+          descripcionCiudad: 'Capital de Colombia',
+          descripcionDepartamento: 'Departamento central de Colombia',
+          fechaCreacion: new Date(),
+          activo: true
         },
         fecha_publicacion_activa: new Date(),
         estado_publicacion: PropertyStatus.PUBLICACION_PAUSADA,
@@ -437,7 +569,13 @@ export class PropertiesComponent implements OnInit {
         id: 3,
         nombre: 'Los álamos',
         descripcion: 'Casa familiar con jardín amplio y zona de recreación para niños.',
-        categoria: { id: 1, nombre: 'Casa', descripcion: 'Casas residenciales' },
+        categoria: { 
+          id: 1, 
+          nombre: 'Casa', 
+          descripcion: 'Casas residenciales',
+          activo: true,
+          fechaCreacion: new Date().toISOString()
+        },
         cantidad_cuartos: 4,
         cantidad_banos: 3,
         precio: 380000000,
@@ -445,8 +583,10 @@ export class PropertiesComponent implements OnInit {
           id: 1, 
           ciudad: 'Medellín',
           departamento: 'Antioquia',
-          descripcion_ciudad: 'Ciudad de la eterna primavera',
-          descripcion_departamento: 'Departamento del noroeste de Colombia'
+          descripcionCiudad: 'Ciudad de la eterna primavera',
+          descripcionDepartamento: 'Departamento del noroeste de Colombia',
+          fechaCreacion: new Date(),
+          activo: true
         },
         fecha_publicacion_activa: new Date(),
         estado_publicacion: PropertyStatus.PUBLICADA,
@@ -467,6 +607,12 @@ export class PropertiesComponent implements OnInit {
   }
 
   toggleForm(): void {
+    // HU #6: Solo vendedor puede crear/editar propiedades
+    if (!this.isVendedor()) {
+      console.warn('Solo vendedores pueden crear propiedades - HU #6');
+      return;
+    }
+    
     this.showForm.set(!this.showForm());
     if (!this.showForm()) {
       this.resetForm();
@@ -483,6 +629,12 @@ export class PropertiesComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // HU #6: Solo vendedor puede publicar casas
+    if (!this.isVendedor()) {
+      console.error('Error HU #6: Solo vendedores pueden publicar propiedades');
+      return;
+    }
+
     if (this.propertyForm.valid) {
       this.isSubmitting.set(true);
       
@@ -514,16 +666,24 @@ export class PropertiesComponent implements OnInit {
           id: this.editingProperty() ? this.editingProperty()!.id : Date.now(),
           nombre: formData.nombre,
           descripcion: formData.descripcion,
-          categoria: selectedCategory,
+          categoria: {
+            id: selectedCategory.id,
+            nombre: selectedCategory.nombre,
+            descripcion: selectedCategory.descripcion,
+            activo: selectedCategory.activo || true,
+            fechaCreacion: selectedCategory.fechaCreacion || new Date().toISOString()
+          },
           cantidad_cuartos: formData.cantidad_cuartos,
           cantidad_banos: formData.cantidad_banos,
           precio: formData.precio,
           ubicacion: {
             id: selectedUbicacion.id,
-            ciudad: selectedUbicacion.ciudad.nombre,
-            departamento: selectedUbicacion.departamento.nombre,
-            descripcion_ciudad: `Ciudad de ${selectedUbicacion.ciudad.nombre}`,
-            descripcion_departamento: `Departamento de ${selectedUbicacion.departamento.nombre}`
+            ciudad: selectedUbicacion.ciudad,
+            departamento: selectedUbicacion.departamento,
+            descripcionCiudad: selectedUbicacion.descripcionCiudad,
+            descripcionDepartamento: selectedUbicacion.descripcionDepartamento,
+            fechaCreacion: selectedUbicacion.fechaCreacion,
+            activo: selectedUbicacion.activo
           },
           fecha_publicacion_activa: new Date(formData.fecha_publicacion_activa),
           estado_publicacion: formData.estado_publicacion,
@@ -564,6 +724,12 @@ export class PropertiesComponent implements OnInit {
   }
 
   editProperty(property: Property): void {
+    // HU #6: Solo vendedor puede editar propiedades
+    if (!this.isVendedor()) {
+      console.warn('Solo vendedores pueden editar propiedades - HU #6');
+      return;
+    }
+
     this.editingProperty.set(property);
     this.propertyForm.patchValue({
       nombre: property.nombre,
@@ -579,17 +745,47 @@ export class PropertiesComponent implements OnInit {
     this.showForm.set(true);
   }
 
-  deleteProperty(id: number): void {
-    if (confirm('¿Estás seguro de que quieres eliminar esta propiedad?')) {
-      const currentProperties = this.properties();
-      const updatedProperties = currentProperties.filter(p => p.id !== id);
-      this.properties.set(updatedProperties);
-      console.log('Property deleted, remaining properties:', updatedProperties);
-      
-      // Force a reload to ensure consistency
-      setTimeout(() => {
-        this.reloadProperties();
-      }, 100);
+  async deleteProperty(id: number): Promise<void> {
+    // HU #6: Solo vendedor puede eliminar propiedades
+    if (!this.isVendedor()) {
+      console.warn('Solo vendedores pueden eliminar propiedades - HU #6');
+      return;
+    }
+
+    const property = this.properties().find(p => p.id === id);
+    if (!property) return;
+
+    const confirmed = await this.alertService.confirm(
+      'Confirmar eliminación',
+      `¿Estás seguro de que deseas eliminar la propiedad "${property.nombre}"? Esta acción no se puede deshacer.`,
+      'Eliminar',
+      'Cancelar'
+    );
+
+    if (confirmed) {
+      try {
+        const currentProperties = this.properties();
+        const updatedProperties = currentProperties.filter(p => p.id !== id);
+        this.properties.set(updatedProperties);
+        
+        await this.alertService.success(
+          'Éxito',
+          `Propiedad "${property.nombre}" eliminada exitosamente`
+        );
+        
+        console.log('Property deleted, remaining properties:', updatedProperties);
+        
+        // Force a reload to ensure consistency
+        setTimeout(() => {
+          this.reloadProperties();
+        }, 100);
+      } catch (error) {
+        console.error('Error deleting property:', error);
+        await this.alertService.error(
+          'Error',
+          'Error al eliminar la propiedad. Por favor intenta nuevamente.'
+        );
+      }
     }
   }
 

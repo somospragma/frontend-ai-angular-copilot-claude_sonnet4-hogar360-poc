@@ -1,316 +1,252 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { delay, tap, catchError } from 'rxjs/operators';
+import { delay, map } from 'rxjs/operators';
 
-// HU #3: Interfaces basadas en criterios de aceptación
-export interface Ubicacion {
-  id: string;
-  ciudad: string; // HU #3: máximo 50 caracteres
-  departamento: string; // HU #3: máximo 50 caracteres, no se puede repetir
-  descripcionCiudad: string; // HU #3: máximo 120 caracteres, obligatoria
-  descripcionDepartamento: string; // HU #3: máximo 120 caracteres, obligatoria
-  fechaCreacion: Date;
-  activo: boolean;
-}
-
-export interface CreateUbicacionRequest {
-  ciudad: string;
-  departamento: string;
-  descripcionCiudad: string;
-  descripcionDepartamento: string;
-}
-
-export interface UbicacionResponse {
-  success: boolean;
-  message: string;
-  ubicacion?: Ubicacion;
-}
-
-export interface SearchUbicacionParams {
-  texto?: string; // HU #4: búsqueda por ciudad o departamento
-  ordenAscendente?: boolean; // HU #4: ordenamiento
-  ordenarPor?: 'ciudad' | 'departamento'; // HU #4: campo de ordenamiento
-  page?: number; // HU #4: paginación
-  pageSize?: number;
-}
-
-export interface SearchUbicacionResponse {
-  ubicaciones: Ubicacion[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
+import { LocalStorageService } from './local-storage.service';
+import { Ubicacion, CreateUbicacionRequest, UbicacionResponse, SearchUbicacionParams, SearchUbicacionResponse } from '../interfaces/ubicacion.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UbicacionService {
+  private readonly localStorageService = inject(LocalStorageService);
+  
   // Signals para manejo de estado
   readonly ubicaciones = signal<Ubicacion[]>([]);
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
+  readonly loading = signal<boolean>(false);
 
-  // Simulación de base de datos
-  private readonly ubicacionesDB = signal<Ubicacion[]>([
-    {
-      id: '1',
-      ciudad: 'Bogotá',
-      departamento: 'Cundinamarca',
-      descripcionCiudad: 'Capital de Colombia, centro político y económico del país',
-      descripcionDepartamento: 'Departamento central de Colombia, rodea la capital',
-      fechaCreacion: new Date('2024-01-01'),
-      activo: true
-    },
-    {
-      id: '2',
-      ciudad: 'Medellín',
-      departamento: 'Antioquia',
-      descripcionCiudad: 'Ciudad de la eterna primavera, importante centro industrial',
-      descripcionDepartamento: 'Departamento del noroeste de Colombia, región montañosa',
-      fechaCreacion: new Date('2024-01-02'),
-      activo: true
-    }
-  ]);
-
-  // Constantes para validación según HU
-  private readonly CIUDAD_MAX_LENGTH = 50;
-  private readonly DEPARTAMENTO_MAX_LENGTH = 50;
-  private readonly DESCRIPCION_MAX_LENGTH = 120;
+  constructor() {
+    // Inicializar ubicaciones con datos del localStorage
+    this.ubicaciones.set(this.localStorageService.getUbicaciones());
+    
+    // Suscribirse a cambios en el localStorage
+    this.localStorageService.ubicaciones$.subscribe(ubicaciones => {
+      this.ubicaciones.set(ubicaciones);
+    });
+  }
 
   /**
-   * HU #3: Crear ubicación (ciudad y departamento)
-   * Criterios de aceptación:
-   * - Ciudad máximo 50 caracteres
-   * - Departamento máximo 50 caracteres, no se puede repetir
-   * - Descripción ciudad obligatoria, máximo 120 caracteres
-   * - Descripción departamento obligatoria, máximo 120 caracteres
+   * HU #3: Crear nueva ubicación con validación
    */
   createUbicacion(ubicacionData: CreateUbicacionRequest): Observable<UbicacionResponse> {
-    this.loading.set(true);
-    this.error.set(null);
-
-    // Validaciones según HU #3
-    const validationErrors = this.validateUbicacionData(ubicacionData);
-    if (validationErrors.length > 0) {
-      this.loading.set(false);
-      this.error.set(validationErrors.join(', '));
-      return of({
-        success: false,
-        message: validationErrors.join(', ')
-      });
-    }
-
-    // Verificar que el departamento no se repita
-    if (this.isDepartamentoExists(ubicacionData.departamento)) {
-      this.loading.set(false);
-      this.error.set('El departamento ya existe');
-      return of({
-        success: false,
-        message: 'El departamento ya existe'
-      });
-    }
-
-    // Crear nueva ubicación
-    const nuevaUbicacion: Ubicacion = {
-      id: Date.now().toString(),
-      ciudad: ubicacionData.ciudad.trim(),
-      departamento: ubicacionData.departamento.trim(),
-      descripcionCiudad: ubicacionData.descripcionCiudad.trim(),
-      descripcionDepartamento: ubicacionData.descripcionDepartamento.trim(),
-      fechaCreacion: new Date(),
-      activo: true
-    };
-
-    // Simular llamada HTTP con delay
-    return of({
-      success: true,
-      message: 'Ubicación creada exitosamente',
-      ubicacion: nuevaUbicacion
-    }).pipe(
-      delay(500),
-      tap(response => {
-        if (response.success && response.ubicacion) {
-          const currentUbicaciones = this.ubicacionesDB();
-          this.ubicacionesDB.set([...currentUbicaciones, response.ubicacion]);
-          this.ubicaciones.set(this.ubicacionesDB());
+    return new Observable(observer => {
+      setTimeout(() => {
+        // Validaciones
+        const validationErrors = this.validateUbicacion(ubicacionData);
+        if (validationErrors.length > 0) {
+          observer.next({
+            success: false,
+            message: validationErrors.join(', ')
+          } as UbicacionResponse);
+          observer.complete();
+          return;
         }
-        this.loading.set(false);
-      }),
-      catchError(error => {
-        this.loading.set(false);
-        this.error.set('Error al crear la ubicación');
-        return of({
-          success: false,
-          message: 'Error al crear la ubicación'
-        });
-      })
+
+        // Verificar que el departamento no se repita usando LocalStorageService
+        if (this.isDepartamentoExists(ubicacionData.departamento)) {
+          observer.next({
+            success: false,
+            message: 'El departamento ya existe'
+          } as UbicacionResponse);
+          observer.complete();
+          return;
+        }
+
+        // Crear nueva ubicación usando LocalStorageService
+        const nuevaUbicacion = this.localStorageService.addUbicacion(ubicacionData);
+
+        observer.next({
+          success: true,
+          message: 'Ubicación creada exitosamente',
+          ubicacion: nuevaUbicacion
+        } as UbicacionResponse);
+        observer.complete();
+      }, 500);
+    });
+  }
+
+  /**
+   * HU #4: Obtener todas las ubicaciones
+   */
+  getUbicaciones(): Observable<Ubicacion[]> {
+    return of(this.localStorageService.getUbicaciones()).pipe(
+      delay(300)
     );
   }
 
   /**
-   * HU #4: Buscar ubicaciones
-   * Criterios de aceptación:
-   * - Buscar por ciudad o departamento
-   * - Ordenar ascendente o descendente por ciudad o departamento
-   * - Mostrar resultados paginados
+   * HU #5: Buscar ubicaciones con parámetros
    */
   searchUbicaciones(params: SearchUbicacionParams = {}): Observable<SearchUbicacionResponse> {
-    this.loading.set(true);
-    this.error.set(null);
+    return new Observable(observer => {
+      setTimeout(() => {
+        const allUbicaciones = this.localStorageService.getUbicaciones();
+        let filteredUbicaciones = allUbicaciones;
 
-    const {
-      texto = '',
-      ordenAscendente = true,
-      ordenarPor = 'ciudad',
-      page = 1,
-      pageSize = 10
-    } = params;
+        // Aplicar filtros
+        if (params.texto) {
+          const searchText = params.texto.toLowerCase();
+          filteredUbicaciones = filteredUbicaciones.filter(ubicacion =>
+            ubicacion.ciudad.toLowerCase().includes(searchText) ||
+            ubicacion.departamento.toLowerCase().includes(searchText) ||
+            ubicacion.descripcionCiudad.toLowerCase().includes(searchText) ||
+            ubicacion.descripcionDepartamento.toLowerCase().includes(searchText)
+          );
+        }
 
-    let resultados = [...this.ubicacionesDB()];
+        // Aplicar ordenamiento
+        if (params.ordenarPor) {
+          filteredUbicaciones.sort((a, b) => {
+            const aValue = a[params.ordenarPor!];
+            const bValue = b[params.ordenarPor!];
+            
+            if (params.ordenAscendente === false) {
+              return bValue.localeCompare(aValue);
+            }
+            return aValue.localeCompare(bValue);
+          });
+        }
 
-    // Filtrar por texto de búsqueda (ciudad o departamento)
-    if (texto.trim()) {
-      const textoBusqueda = texto.toLowerCase().trim();
-      resultados = resultados.filter(ubicacion =>
-        ubicacion.ciudad.toLowerCase().includes(textoBusqueda) ||
-        ubicacion.departamento.toLowerCase().includes(textoBusqueda)
-      );
-    }
+        // Aplicar paginación
+        const page = params.page || 1;
+        const pageSize = params.pageSize || 10;
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedUbicaciones = filteredUbicaciones.slice(startIndex, endIndex);
 
-    // Ordenar según criterios
-    resultados.sort((a, b) => {
-      const valorA = a[ordenarPor].toLowerCase();
-      const valorB = b[ordenarPor].toLowerCase();
-      
-      if (ordenAscendente) {
-        return valorA.localeCompare(valorB);
-      } else {
-        return valorB.localeCompare(valorA);
-      }
+        observer.next({
+          ubicaciones: paginatedUbicaciones,
+          total: filteredUbicaciones.length,
+          page: page,
+          pageSize: pageSize,
+          totalPages: Math.ceil(filteredUbicaciones.length / pageSize)
+        });
+        observer.complete();
+      }, 300);
     });
+  }
 
-    // Paginación
-    const total = resultados.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const ubicacionesPaginadas = resultados.slice(startIndex, endIndex);
-
-    // Simular delay de red
-    return of({
-      ubicaciones: ubicacionesPaginadas,
-      total,
-      page,
-      pageSize,
-      totalPages
-    }).pipe(
-      delay(300),
-      tap(response => {
-        this.ubicaciones.set(response.ubicaciones);
-        this.loading.set(false);
-      }),
-      catchError(error => {
-        this.loading.set(false);
-        this.error.set('Error al buscar ubicaciones');
-        throw error;
-      })
+  /**
+   * HU #6: Obtener ubicación por ID
+   */
+  getUbicacionById(id: number): Observable<Ubicacion | null> {
+    return of(this.localStorageService.getUbicacionById(id)).pipe(
+      delay(200)
     );
   }
 
   /**
-   * Validar si un departamento ya existe
+   * HU #7: Actualizar ubicación existente
    */
-  isDepartamentoExists(departamento: string): boolean {
-    return this.ubicacionesDB().some(
-      ubicacion => ubicacion.departamento.toLowerCase() === departamento.toLowerCase().trim()
+  updateUbicacion(id: number, ubicacionData: CreateUbicacionRequest): Observable<UbicacionResponse> {
+    return new Observable(observer => {
+      setTimeout(() => {
+        // Validaciones
+        const validationErrors = this.validateUbicacion(ubicacionData);
+        if (validationErrors.length > 0) {
+          observer.next({
+            success: false,
+            message: validationErrors.join(', ')
+          } as UbicacionResponse);
+          observer.complete();
+          return;
+        }
+
+        // Verificar que el departamento no se repita (excluyendo el actual)
+        if (this.isDepartamentoExists(ubicacionData.departamento, id)) {
+          observer.next({
+            success: false,
+            message: 'El departamento ya existe'
+          } as UbicacionResponse);
+          observer.complete();
+          return;
+        }
+
+        // Actualizar ubicación usando LocalStorageService
+        const updatedUbicacion = this.localStorageService.updateUbicacion(id, ubicacionData);
+
+        observer.next({
+          success: true,
+          message: 'Ubicación actualizada exitosamente',
+          ubicacion: updatedUbicacion
+        } as UbicacionResponse);
+        observer.complete();
+      }, 500);
+    });
+  }
+
+  /**
+   * Eliminar ubicación (soft delete)
+   */
+  deleteUbicacion(id: number): Observable<UbicacionResponse> {
+    return new Observable(observer => {
+      setTimeout(() => {
+        try {
+          this.localStorageService.deleteUbicacion(id);
+          
+          observer.next({
+            success: true,
+            message: 'Ubicación eliminada exitosamente'
+          } as UbicacionResponse);
+          observer.complete();
+        } catch (error) {
+          observer.next({
+            success: false,
+            message: 'Error al eliminar la ubicación'
+          } as UbicacionResponse);
+          observer.complete();
+        }
+      }, 500);
+    });
+  }
+
+  /**
+   * Verificar si un departamento ya existe
+   */
+  isDepartamentoExists(departamento: string, excludeId?: number): boolean {
+    const ubicaciones = this.localStorageService.getUbicaciones();
+    return ubicaciones.some(ubicacion => 
+      ubicacion.departamento.toLowerCase() === departamento.toLowerCase() && 
+      (!excludeId || ubicacion.id !== excludeId)
     );
   }
 
   /**
-   * Verificar si una ciudad ya existe en un departamento
+   * Validar datos de ubicación
    */
-  isCiudadExistsInDepartamento(ciudad: string, departamento: string): boolean {
-    return this.ubicacionesDB().some(
-      ubicacion => 
-        ubicacion.ciudad.toLowerCase() === ciudad.toLowerCase().trim() &&
-        ubicacion.departamento.toLowerCase() === departamento.toLowerCase().trim()
-    );
-  }
-
-  /**
-   * Validaciones según criterios de aceptación HU #3
-   */
-  private validateUbicacionData(data: CreateUbicacionRequest): string[] {
+  private validateUbicacion(ubicacionData: CreateUbicacionRequest): string[] {
     const errors: string[] = [];
 
     // Validar ciudad
-    if (!data.ciudad || !data.ciudad.trim()) {
-      errors.push('La ciudad es obligatoria');
-    } else if (data.ciudad.trim().length > this.CIUDAD_MAX_LENGTH) {
-      errors.push(`La ciudad no puede tener más de ${this.CIUDAD_MAX_LENGTH} caracteres`);
+    if (!ubicacionData.ciudad || ubicacionData.ciudad.trim().length === 0) {
+      errors.push('La ciudad es requerida');
+    } else if (ubicacionData.ciudad.length > 50) {
+      errors.push('La ciudad no puede exceder 50 caracteres');
     }
 
     // Validar departamento
-    if (!data.departamento || !data.departamento.trim()) {
-      errors.push('El departamento es obligatorio');
-    } else if (data.departamento.trim().length > this.DEPARTAMENTO_MAX_LENGTH) {
-      errors.push(`El departamento no puede tener más de ${this.DEPARTAMENTO_MAX_LENGTH} caracteres`);
+    if (!ubicacionData.departamento || ubicacionData.departamento.trim().length === 0) {
+      errors.push('El departamento es requerido');
+    } else if (ubicacionData.departamento.length > 50) {
+      errors.push('El departamento no puede exceder 50 caracteres');
     }
 
     // Validar descripción ciudad
-    if (!data.descripcionCiudad || !data.descripcionCiudad.trim()) {
-      errors.push('La descripción de la ciudad es obligatoria');
-    } else if (data.descripcionCiudad.trim().length > this.DESCRIPCION_MAX_LENGTH) {
-      errors.push(`La descripción de la ciudad no puede tener más de ${this.DESCRIPCION_MAX_LENGTH} caracteres`);
+    if (!ubicacionData.descripcionCiudad || ubicacionData.descripcionCiudad.trim().length === 0) {
+      errors.push('La descripción de la ciudad es requerida');
+    } else if (ubicacionData.descripcionCiudad.length > 200) {
+      errors.push('La descripción de la ciudad no puede exceder 200 caracteres');
     }
 
     // Validar descripción departamento
-    if (!data.descripcionDepartamento || !data.descripcionDepartamento.trim()) {
-      errors.push('La descripción del departamento es obligatoria');
-    } else if (data.descripcionDepartamento.trim().length > this.DESCRIPCION_MAX_LENGTH) {
-      errors.push(`La descripción del departamento no puede tener más de ${this.DESCRIPCION_MAX_LENGTH} caracteres`);
+    if (!ubicacionData.descripcionDepartamento || ubicacionData.descripcionDepartamento.trim().length === 0) {
+      errors.push('La descripción del departamento es requerida');
+    } else if (ubicacionData.descripcionDepartamento.length > 200) {
+      errors.push('La descripción del departamento no puede exceder 200 caracteres');
     }
 
     return errors;
   }
-
-  /**
-   * Obtener todas las ubicaciones
-   */
-  getAllUbicaciones(): Observable<Ubicacion[]> {
-    return of(this.ubicacionesDB()).pipe(delay(200));
-  }
-
-  /**
-   * Obtener ubicación por ID
-   */
-  getUbicacionById(id: string): Observable<Ubicacion | null> {
-    const ubicacion = this.ubicacionesDB().find(u => u.id === id) || null;
-    return of(ubicacion).pipe(delay(200));
-  }
-
-  /**
-   * Eliminar ubicación
-   */
-  deleteUbicacion(id: string): Observable<UbicacionResponse> {
-    const currentUbicaciones = this.ubicacionesDB();
-    const index = currentUbicaciones.findIndex(u => u.id === id);
-
-    if (index === -1) {
-      return of({
-        success: false,
-        message: 'Ubicación no encontrada'
-      });
-    }
-
-    const updatedUbicaciones = currentUbicaciones.filter(u => u.id !== id);
-    this.ubicacionesDB.set(updatedUbicaciones);
-    this.ubicaciones.set(updatedUbicaciones);
-
-    return of({
-      success: true,
-      message: 'Ubicación eliminada exitosamente'
-    }).pipe(delay(300));
-  }
 }
+
+export { Ubicacion, CreateUbicacionRequest, SearchUbicacionParams };

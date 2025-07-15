@@ -22,7 +22,11 @@ export function createUniqueCategoryNameValidator(
       switchMap(name => 
         categoryService.isNameUnique(name, excludeId).pipe(
           map(isUnique => {
-            return isUnique ? null : { 
+            if (isUnique) {
+              return null;
+            }
+            
+            return { 
               nameExists: {
                 message: 'El nombre de la categoría ya existe. Por favor, ingrese un nombre único.',
                 value: name

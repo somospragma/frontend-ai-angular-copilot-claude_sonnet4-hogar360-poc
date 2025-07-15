@@ -1,9 +1,10 @@
-import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthFacade } from '../../../core/facades/auth.facade';
 import { LogoComponent } from '../../../shared/components/atoms/logo/logo.component';
 import { ButtonComponent } from '../../../shared/components/atoms/button/button.component';
 import { InputComponent } from '../../../shared/components/atoms/input/input.component';
@@ -435,10 +436,11 @@ import { InputComponent } from '../../../shared/components/atoms/input/input.com
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent {
-  private readonly authService = inject(AuthService);
+export class LoginComponent implements OnInit, OnDestroy {
+  private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly destroy$ = new Subject<void>();
 
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
@@ -448,6 +450,22 @@ export class LoginComponent {
     correo: ['', [Validators.required, Validators.email]],
     clave: ['', [Validators.required, Validators.minLength(6)]]
   });
+
+  ngOnInit(): void {
+    // Subscribe to auth state changes
+    this.authFacade.isLoading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(loading => this.isLoading.set(loading));
+
+    this.authFacade.error$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(error => this.errorMessage.set(error));
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   fillCredentials(email: string, password: string): void {
     this.loginForm.patchValue({
@@ -477,23 +495,8 @@ export class LoginComponent {
       return;
     }
 
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-
+    this.authFacade.clearError();
     const { correo, clave } = this.loginForm.value;
-    
-    this.authService.login({ correo, clave }).subscribe({
-      next: () => {
-        // El servicio de auth maneja la navegación automáticamente
-        console.log('Login exitoso');
-      },
-      error: (error) => {
-        this.errorMessage.set('Email o contraseña incorrectos');
-        this.isLoading.set(false);
-      },
-      complete: () => {
-        this.isLoading.set(false);
-      }
-    });
+    this.authFacade.login({ correo, clave });
   }
 }

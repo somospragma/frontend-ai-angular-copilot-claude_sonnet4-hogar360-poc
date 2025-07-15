@@ -84,6 +84,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/properties/properties.component').then(m => m.PropertiesComponent),
         title: 'Gestión de Propiedades - Hogar360'
       },
+      // HU #10: Listar horarios de visita (Admin puede ver todos)
+      {
+        path: 'horarios-visitas',
+        loadComponent: () => import('./features/visit-schedules-listing/visit-schedules-listing.component').then(m => m.VisitSchedulesListingComponent),
+        title: 'Horarios de Visitas - Hogar360'
+      },
       {
         path: 'configuracion',
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
@@ -108,6 +114,18 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () => import('./features/dashboard/dashboard-content/dashboard-content.component').then(m => m.DashboardContentComponent),
         title: 'Dashboard Vendedor - Hogar360'
+      },
+      // HU #2: Listar categorías (todos los roles)
+      {
+        path: 'categorias',
+        loadComponent: () => import('./features/categorias/categorias.component').then(m => m.CategoriasComponent),
+        title: 'Categorías de Inmuebles - Hogar360'
+      },
+      // HU #4: Buscar ubicaciones (todos los roles)
+      {
+        path: 'ubicaciones',
+        loadComponent: () => import('./features/ubicaciones/ubicaciones.component').then(m => m.UbicacionesComponent),
+        title: 'Ubicaciones Disponibles - Hogar360'
       },
       // HU #6: Publicar casa (solo Vendedor)
       {
@@ -145,6 +163,18 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () => import('./features/dashboard/dashboard-content/dashboard-content.component').then(m => m.DashboardContentComponent),
         title: 'Dashboard Comprador - Hogar360'
+      },
+      // HU #2: Listar categorías (todos los roles)
+      {
+        path: 'categorias',
+        loadComponent: () => import('./features/categorias/categorias.component').then(m => m.CategoriasComponent),
+        title: 'Categorías de Inmuebles - Hogar360'
+      },
+      // HU #4: Buscar ubicaciones (todos los roles)
+      {
+        path: 'ubicaciones',
+        loadComponent: () => import('./features/ubicaciones/ubicaciones.component').then(m => m.UbicacionesComponent),
+        title: 'Ubicaciones Disponibles - Hogar360'
       },
       // HU #11: Agendar visitas (solo Comprador)
       {

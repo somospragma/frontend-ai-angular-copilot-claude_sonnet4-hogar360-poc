@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export interface NavigationItem {
   id: string;
@@ -17,7 +18,7 @@ export interface NavigationItem {
     <a class="nav-item" 
        [class.active]="item.isActive"
        (click)="onItemClick($event)">
-      <div class="nav-icon" [innerHTML]="item.icon"></div>
+      <div class="nav-icon" [innerHTML]="safeIcon"></div>
       <span class="nav-label">{{ item.label }}</span>
     </a>
   `,
@@ -41,8 +42,14 @@ export interface NavigationItem {
   `]
 })
 export class NavItemComponent {
+  private readonly sanitizer = inject(DomSanitizer);
+  
   @Input({ required: true }) item!: NavigationItem;
   @Output() itemClick = new EventEmitter<NavigationItem>();
+
+  get safeIcon(): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(this.item.icon);
+  }
 
   onItemClick(event: Event): void {
     event.preventDefault();

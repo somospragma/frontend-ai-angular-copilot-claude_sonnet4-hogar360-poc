@@ -2,6 +2,8 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UbicacionService, Ubicacion, CreateUbicacionRequest, SearchUbicacionParams } from '../../core/services/ubicacion.service';
+import { AuthFacade } from '../../core/facades/auth.facade';
+import { UserRole } from '../../core/interfaces';
 
 @Component({
   selector: 'app-ubicaciones',
@@ -11,197 +13,203 @@ import { UbicacionService, Ubicacion, CreateUbicacionRequest, SearchUbicacionPar
     <div class="ubicaciones-page p-6 bg-gray-50 min-h-screen">
       <!-- Header -->
       <div class="bg-white shadow-sm rounded-lg p-6 mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 mb-2">Gestión de Ubicaciones</h1>
-        <p class="text-gray-600">Crear y administrar ubicaciones (ciudades y departamentos)</p>
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">
+          {{ isAdmin() ? 'Gestión de Ubicaciones' : 'Ubicaciones Disponibles' }}
+        </h1>
+        <p class="text-gray-600">
+          {{ isAdmin() ? 'Crear y administrar ubicaciones (ciudades y departamentos)' : 'Buscar y explorar ubicaciones disponibles' }}
+        </p>
       </div>
 
-      <div class="grid lg:grid-cols-2 gap-6">
-        <!-- Formulario de Creación - HU #3 -->
-        <div class="bg-white shadow-sm rounded-lg p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">
-            <i class="fas fa-plus-circle text-blue-500 mr-2"></i>
-            Crear Nueva Ubicación
-          </h2>
+      <div class="grid" [class.lg:grid-cols-2]="isAdmin()" [class.lg:grid-cols-1]="!isAdmin()" [class.gap-6]="isAdmin()">
+        <!-- Formulario de Creación - HU #3 (Solo Admin) -->
+        @if (isAdmin()) {
+          <div class="bg-white shadow-sm rounded-lg p-6 mb-6 lg:mb-0">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+              <i class="fas fa-plus-circle text-blue-500 mr-2"></i>
+              Crear Nueva Ubicación
+            </h2>
 
-          <form (ngSubmit)="onSubmit()" #ubicacionForm="ngForm" class="space-y-4">
-            <!-- Ciudad -->
-            <div>
-              <label for="ciudad" class="block text-sm font-medium text-gray-700 mb-1">
-                Ciudad *
-              </label>
-              <input
-                type="text"
-                id="ciudad"
-                name="ciudad"
-                [(ngModel)]="formData.ciudad"
-                #ciudad="ngModel"
-                required
-                maxlength="50"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ingrese el nombre de la ciudad"
-              >
-              <div class="text-xs text-gray-500 mt-1">
-                {{ formData.ciudad.length }}/50 caracteres
-              </div>
-              @if (ciudad.invalid && ciudad.touched) {
-                <div class="text-red-500 text-sm mt-1">
-                  @if (ciudad.errors?.['required']) {
-                    <p>La ciudad es obligatoria</p>
-                  }
-                  @if (ciudad.errors?.['maxlength']) {
-                    <p>La ciudad no puede tener más de 50 caracteres</p>
-                  }
+            <form (ngSubmit)="onSubmit()" #ubicacionForm="ngForm" class="space-y-4">
+              <!-- Ciudad -->
+              <div>
+                <label for="ciudad" class="block text-sm font-medium text-gray-700 mb-1">
+                  Ciudad *
+                </label>
+                <input
+                  type="text"
+                  id="ciudad"
+                  name="ciudad"
+                  [(ngModel)]="formData.ciudad"
+                  #ciudad="ngModel"
+                  required
+                  maxlength="50"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ingrese el nombre de la ciudad"
+                >
+                <div class="text-xs text-gray-500 mt-1">
+                  {{ formData.ciudad.length }}/50 caracteres
                 </div>
-              }
-            </div>
-
-            <!-- Departamento -->
-            <div>
-              <label for="departamento" class="block text-sm font-medium text-gray-700 mb-1">
-                Departamento *
-              </label>
-              <input
-                type="text"
-                id="departamento"
-                name="departamento"
-                [(ngModel)]="formData.departamento"
-                #departamento="ngModel"
-                required
-                maxlength="50"
-                (blur)="validateDepartamentoUniqueness()"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                [class.border-red-500]="departamentoExists()"
-                placeholder="Ingrese el nombre del departamento"
-              >
-              <div class="text-xs text-gray-500 mt-1">
-                {{ formData.departamento.length }}/50 caracteres
-              </div>
-              @if (departamento.invalid && departamento.touched) {
-                <div class="text-red-500 text-sm mt-1">
-                  @if (departamento.errors?.['required']) {
-                    <p>El departamento es obligatorio</p>
-                  }
-                  @if (departamento.errors?.['maxlength']) {
-                    <p>El departamento no puede tener más de 50 caracteres</p>
-                  }
-                </div>
-              }
-              @if (departamentoExists()) {
-                <div class="text-red-500 text-sm mt-1">
-                  <p>Este departamento ya existe</p>
-                </div>
-              }
-            </div>
-
-            <!-- Descripción Ciudad -->
-            <div>
-              <label for="descripcionCiudad" class="block text-sm font-medium text-gray-700 mb-1">
-                Descripción de la Ciudad *
-              </label>
-              <textarea
-                id="descripcionCiudad"
-                name="descripcionCiudad"
-                [(ngModel)]="formData.descripcionCiudad"
-                #descripcionCiudad="ngModel"
-                required
-                maxlength="120"
-                rows="3"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Describe características importantes de la ciudad"
-              ></textarea>
-              <div class="text-xs text-gray-500 mt-1">
-                {{ formData.descripcionCiudad.length }}/120 caracteres
-              </div>
-              @if (descripcionCiudad.invalid && descripcionCiudad.touched) {
-                <div class="text-red-500 text-sm mt-1">
-                  @if (descripcionCiudad.errors?.['required']) {
-                    <p>La descripción de la ciudad es obligatoria</p>
-                  }
-                  @if (descripcionCiudad.errors?.['maxlength']) {
-                    <p>La descripción no puede tener más de 120 caracteres</p>
-                  }
-                </div>
-              }
-            </div>
-
-            <!-- Descripción Departamento -->
-            <div>
-              <label for="descripcionDepartamento" class="block text-sm font-medium text-gray-700 mb-1">
-                Descripción del Departamento *
-              </label>
-              <textarea
-                id="descripcionDepartamento"
-                name="descripcionDepartamento"
-                [(ngModel)]="formData.descripcionDepartamento"
-                #descripcionDepartamento="ngModel"
-                required
-                maxlength="120"
-                rows="3"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Describe características importantes del departamento"
-              ></textarea>
-              <div class="text-xs text-gray-500 mt-1">
-                {{ formData.descripcionDepartamento.length }}/120 caracteres
-              </div>
-              @if (descripcionDepartamento.invalid && descripcionDepartamento.touched) {
-                <div class="text-red-500 text-sm mt-1">
-                  @if (descripcionDepartamento.errors?.['required']) {
-                    <p>La descripción del departamento es obligatoria</p>
-                  }
-                  @if (descripcionDepartamento.errors?.['maxlength']) {
-                    <p>La descripción no puede tener más de 120 caracteres</p>
-                  }
-                </div>
-              }
-            </div>
-
-            <!-- Botones -->
-            <div class="flex gap-3 pt-4">
-              <button
-                type="submit"
-                [disabled]="ubicacionForm.invalid || departamentoExists() || ubicacionService.loading()"
-                class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                @if (ubicacionService.loading()) {
-                  <i class="fas fa-spinner fa-spin mr-2"></i>
-                  Guardando...
-                } @else {
-                  <i class="fas fa-save mr-2"></i>
-                  Crear Ubicación
+                @if (ciudad.invalid && ciudad.touched) {
+                  <div class="text-red-500 text-sm mt-1">
+                    @if (ciudad.errors?.['required']) {
+                      <p>La ciudad es obligatoria</p>
+                    }
+                    @if (ciudad.errors?.['maxlength']) {
+                      <p>La ciudad no puede tener más de 50 caracteres</p>
+                    }
+                  </div>
                 }
-              </button>
-              <button
-                type="button"
-                (click)="resetForm()"
-                class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
-              >
-                <i class="fas fa-times mr-2"></i>
-                Limpiar
-              </button>
-            </div>
-          </form>
-
-          <!-- Mensaje de resultado -->
-          @if (mensajeResultado()) {
-            <div class="mt-4 p-3 rounded-md" 
-                 [class]="esExito() ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'">
-              <div class="flex">
-                @if (esExito()) {
-                  <i class="fas fa-check-circle text-green-400 mr-2 mt-0.5"></i>
-                } @else {
-                  <i class="fas fa-exclamation-circle text-red-400 mr-2 mt-0.5"></i>
-                }
-                <span>{{ mensajeResultado() }}</span>
               </div>
-            </div>
-          }
-        </div>
 
-        <!-- Búsqueda y Lista - HU #4 -->
+              <!-- Departamento -->
+              <div>
+                <label for="departamento" class="block text-sm font-medium text-gray-700 mb-1">
+                  Departamento *
+                </label>
+                <input
+                  type="text"
+                  id="departamento"
+                  name="departamento"
+                  [(ngModel)]="formData.departamento"
+                  #departamento="ngModel"
+                  required
+                  maxlength="50"
+                  (blur)="validateDepartamentoUniqueness()"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  [class.border-red-500]="departamentoExists()"
+                  placeholder="Ingrese el nombre del departamento"
+                >
+                <div class="text-xs text-gray-500 mt-1">
+                  {{ formData.departamento.length }}/50 caracteres
+                </div>
+                @if (departamento.invalid && departamento.touched) {
+                  <div class="text-red-500 text-sm mt-1">
+                    @if (departamento.errors?.['required']) {
+                      <p>El departamento es obligatorio</p>
+                    }
+                    @if (departamento.errors?.['maxlength']) {
+                      <p>El departamento no puede tener más de 50 caracteres</p>
+                    }
+                  </div>
+                }
+                @if (departamentoExists()) {
+                  <div class="text-red-500 text-sm mt-1">
+                    <p>Este departamento ya existe</p>
+                  </div>
+                }
+              </div>
+
+              <!-- Descripción Ciudad -->
+              <div>
+                <label for="descripcionCiudad" class="block text-sm font-medium text-gray-700 mb-1">
+                  Descripción de la Ciudad *
+                </label>
+                <textarea
+                  id="descripcionCiudad"
+                  name="descripcionCiudad"
+                  [(ngModel)]="formData.descripcionCiudad"
+                  #descripcionCiudad="ngModel"
+                  required
+                  maxlength="120"
+                  rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="Describe características importantes de la ciudad"
+                ></textarea>
+                <div class="text-xs text-gray-500 mt-1">
+                  {{ formData.descripcionCiudad.length }}/120 caracteres
+                </div>
+                @if (descripcionCiudad.invalid && descripcionCiudad.touched) {
+                  <div class="text-red-500 text-sm mt-1">
+                    @if (descripcionCiudad.errors?.['required']) {
+                      <p>La descripción de la ciudad es obligatoria</p>
+                    }
+                    @if (descripcionCiudad.errors?.['maxlength']) {
+                      <p>La descripción no puede tener más de 120 caracteres</p>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Descripción Departamento -->
+              <div>
+                <label for="descripcionDepartamento" class="block text-sm font-medium text-gray-700 mb-1">
+                  Descripción del Departamento *
+                </label>
+                <textarea
+                  id="descripcionDepartamento"
+                  name="descripcionDepartamento"
+                  [(ngModel)]="formData.descripcionDepartamento"
+                  #descripcionDepartamento="ngModel"
+                  required
+                  maxlength="120"
+                  rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="Describe características importantes del departamento"
+                ></textarea>
+                <div class="text-xs text-gray-500 mt-1">
+                  {{ formData.descripcionDepartamento.length }}/120 caracteres
+                </div>
+                @if (descripcionDepartamento.invalid && descripcionDepartamento.touched) {
+                  <div class="text-red-500 text-sm mt-1">
+                    @if (descripcionDepartamento.errors?.['required']) {
+                      <p>La descripción del departamento es obligatoria</p>
+                    }
+                    @if (descripcionDepartamento.errors?.['maxlength']) {
+                      <p>La descripción no puede tener más de 120 caracteres</p>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Botones -->
+              <div class="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  [disabled]="ubicacionForm.invalid || departamentoExists() || ubicacionService.loading()"
+                  class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  @if (ubicacionService.loading()) {
+                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                    Guardando...
+                  } @else {
+                    <i class="fas fa-save mr-2"></i>
+                    Crear Ubicación
+                  }
+                </button>
+                <button
+                  type="button"
+                  (click)="resetForm()"
+                  class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                >
+                  <i class="fas fa-times mr-2"></i>
+                  Limpiar
+                </button>
+              </div>
+            </form>
+
+            <!-- Mensaje de resultado -->
+            @if (mensajeResultado()) {
+              <div class="mt-4 p-3 rounded-md" 
+                   [class]="esExito() ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'">
+                <div class="flex">
+                  @if (esExito()) {
+                    <i class="fas fa-check-circle text-green-400 mr-2 mt-0.5"></i>
+                  } @else {
+                    <i class="fas fa-exclamation-circle text-red-400 mr-2 mt-0.5"></i>
+                  }
+                  <span>{{ mensajeResultado() }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Búsqueda y Lista - HU #4 (Todos los roles) -->
         <div class="bg-white shadow-sm rounded-lg p-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">
             <i class="fas fa-search text-green-500 mr-2"></i>
-            Buscar Ubicaciones
+            {{ isAdmin() ? 'Buscar Ubicaciones' : 'Explorar Ubicaciones' }}
           </h2>
 
           <!-- Filtros de búsqueda -->
@@ -296,13 +304,15 @@ import { UbicacionService, Ubicacion, CreateUbicacionRequest, SearchUbicacionPar
                       <span class="text-xs text-gray-400">
                         {{ formatDate(ubicacion.fechaCreacion) }}
                       </span>
-                      <button
-                        (click)="eliminarUbicacion(ubicacion.id)"
-                        class="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
-                        title="Eliminar ubicación"
-                      >
-                        <i class="fas fa-trash text-sm"></i>
-                      </button>
+                      @if (isAdmin()) {
+                        <button
+                          (click)="eliminarUbicacion(ubicacion.id)"
+                          class="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
+                          title="Eliminar ubicación"
+                        >
+                          <i class="fas fa-trash text-sm"></i>
+                        </button>
+                      }
                     </div>
                   </div>
                 </div>
@@ -348,17 +358,14 @@ import { UbicacionService, Ubicacion, CreateUbicacionRequest, SearchUbicacionPar
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
-    /* Animaciones suaves */
     .transition-colors {
       transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
 
-    /* Estados de validación */
     .border-red-500 {
       border-color: #ef4444 !important;
     }
 
-    /* Scrollbar personalizado para textarea */
     textarea::-webkit-scrollbar {
       width: 6px;
     }
@@ -379,8 +386,8 @@ import { UbicacionService, Ubicacion, CreateUbicacionRequest, SearchUbicacionPar
 })
 export class UbicacionesComponent implements OnInit {
   public readonly ubicacionService = inject(UbicacionService);
+  private readonly authFacade = inject(AuthFacade);
 
-  // Signals para el estado del componente
   resultadosBusqueda = signal<Ubicacion[]>([]);
   paginacion = signal({
     page: 1,
@@ -392,7 +399,6 @@ export class UbicacionesComponent implements OnInit {
   esExito = signal<boolean>(false);
   departamentoExists = signal<boolean>(false);
 
-  // Datos del formulario
   formData: CreateUbicacionRequest = {
     ciudad: '',
     departamento: '',
@@ -400,7 +406,6 @@ export class UbicacionesComponent implements OnInit {
     descripcionDepartamento: ''
   };
 
-  // Filtros de búsqueda según HU #4
   filtrosBusqueda: SearchUbicacionParams = {
     texto: '',
     ordenAscendente: true,
@@ -409,17 +414,23 @@ export class UbicacionesComponent implements OnInit {
     pageSize: 5
   };
 
-  // Exponer Math para uso en template
   Math = Math;
 
   ngOnInit(): void {
     this.cargarUbicaciones();
   }
 
-  /**
-   * HU #3: Enviar formulario de creación
-   */
+  isAdmin(): boolean {
+    const user = this.authFacade.getCurrentUser();
+    return user?.role === UserRole.ADMIN;
+  }
+
   onSubmit(): void {
+    if (!this.isAdmin()) {
+      this.mostrarMensaje('No tienes permisos para crear ubicaciones', false);
+      return;
+    }
+
     if (this.departamentoExists()) {
       this.mostrarMensaje('El departamento ya existe', false);
       return;
@@ -430,7 +441,7 @@ export class UbicacionesComponent implements OnInit {
         if (response.success) {
           this.mostrarMensaje(response.message, true);
           this.resetForm();
-          this.cargarUbicaciones(); // Recargar la lista
+          this.cargarUbicaciones();
         } else {
           this.mostrarMensaje(response.message, false);
         }
@@ -442,9 +453,6 @@ export class UbicacionesComponent implements OnInit {
     });
   }
 
-  /**
-   * Validar unicidad del departamento en tiempo real
-   */
   validateDepartamentoUniqueness(): void {
     if (this.formData.departamento.trim()) {
       const exists = this.ubicacionService.isDepartamentoExists(this.formData.departamento);
@@ -454,17 +462,11 @@ export class UbicacionesComponent implements OnInit {
     }
   }
 
-  /**
-   * HU #4: Realizar búsqueda de ubicaciones
-   */
   onBuscar(): void {
-    this.filtrosBusqueda.page = 1; // Resetear a primera página
+    this.filtrosBusqueda.page = 1;
     this.realizarBusqueda();
   }
 
-  /**
-   * Realizar búsqueda con los filtros actuales
-   */
   private realizarBusqueda(): void {
     this.ubicacionService.searchUbicaciones(this.filtrosBusqueda).subscribe({
       next: (response) => {
@@ -483,9 +485,6 @@ export class UbicacionesComponent implements OnInit {
     });
   }
 
-  /**
-   * Cambiar página de resultados
-   */
   cambiarPagina(nuevaPagina: number): void {
     if (nuevaPagina >= 1 && nuevaPagina <= this.paginacion().totalPages) {
       this.filtrosBusqueda.page = nuevaPagina;
@@ -493,17 +492,16 @@ export class UbicacionesComponent implements OnInit {
     }
   }
 
-  /**
-   * Cargar todas las ubicaciones al iniciar
-   */
   private cargarUbicaciones(): void {
     this.realizarBusqueda();
   }
 
-  /**
-   * Eliminar ubicación
-   */
-  eliminarUbicacion(id: string): void {
+  eliminarUbicacion(id: number): void {
+    if (!this.isAdmin()) {
+      this.mostrarMensaje('No tienes permisos para eliminar ubicaciones', false);
+      return;
+    }
+
     if (confirm('¿Está seguro de que desea eliminar esta ubicación?')) {
       this.ubicacionService.deleteUbicacion(id).subscribe({
         next: (response) => {
@@ -522,9 +520,6 @@ export class UbicacionesComponent implements OnInit {
     }
   }
 
-  /**
-   * Limpiar formulario
-   */
   resetForm(): void {
     this.formData = {
       ciudad: '',
@@ -536,22 +531,15 @@ export class UbicacionesComponent implements OnInit {
     this.mensajeResultado.set('');
   }
 
-  /**
-   * Mostrar mensaje de resultado
-   */
   private mostrarMensaje(mensaje: string, exito: boolean): void {
     this.mensajeResultado.set(mensaje);
     this.esExito.set(exito);
     
-    // Limpiar mensaje después de 5 segundos
     setTimeout(() => {
       this.mensajeResultado.set('');
     }, 5000);
   }
 
-  /**
-   * Formatear fecha para mostrar
-   */
   formatDate(fecha: Date): string {
     return new Date(fecha).toLocaleDateString('es-CO', {
       day: '2-digit',

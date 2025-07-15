@@ -2,7 +2,7 @@ import { Component, inject, ChangeDetectionStrategy, signal, OnInit, HostListene
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 
-import { AuthService } from '../../core/services/auth.service';
+import { AuthFacade } from '../../core/facades/auth.facade';
 import { LogoComponent } from '../../shared/components/atoms/logo/logo.component';
 
 @Component({
@@ -313,15 +313,15 @@ import { LogoComponent } from '../../shared/components/atoms/logo/logo.component
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminLayoutComponent implements OnInit {
-  private readonly authService = inject(AuthService);
+  private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
 
-  currentUser = this.authService.currentUser;
+  currentUser = this.authFacade.user$;
   dropdownOpen = signal(false);
 
   ngOnInit(): void {
     // Verificar autenticación al inicializar
-    if (!this.authService.isAuthenticated()) {
+    if (!this.authFacade.getIsAuthenticated()) {
       this.router.navigate(['/login']);
     }
   }
@@ -345,16 +345,16 @@ export class AdminLayoutComponent implements OnInit {
   }
 
   getUserName(): string {
-    return this.currentUser()?.nombre || 'Usuario';
+    return this.authFacade.getCurrentUser()?.nombre || 'Usuario';
   }
 
   getUserRole(): string {
-    return this.currentUser()?.role || 'admin';
+    return this.authFacade.getCurrentUser()?.role || 'admin';
   }
 
   getUserAvatar(): string {
     // Usar una imagen por defecto o la imagen del usuario
-    return this.currentUser()?.avatar || '/assets/images/avatar.jpg';
+    return this.authFacade.getCurrentUser()?.avatar || '/assets/images/avatar.jpg';
   }
 
   isActiveRoute(route: string): boolean {
@@ -387,7 +387,7 @@ export class AdminLayoutComponent implements OnInit {
   logout(event?: Event): void {
     event?.preventDefault();
     this.dropdownOpen.set(false);
-    this.authService.logout();
+    this.authFacade.logout();
     this.router.navigate(['/']);
   }
 }

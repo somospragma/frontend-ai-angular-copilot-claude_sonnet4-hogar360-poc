@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, inject, OnInit, HostListener, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
-import { AuthService } from '../../../../core/services/auth.service';
+import { AuthFacade } from '../../../../core/facades/auth.facade';
 import { SidebarComponent } from '../../molecules/sidebar/sidebar.component';
 import { AppHeaderComponent } from '../../molecules/app-header/app-header.component';
 import { AppFooterComponent } from '../../molecules/app-footer/app-footer.component';
@@ -73,18 +73,18 @@ import { UserInfo, DropdownAction } from '../../atoms/user-dropdown/user-dropdow
   `]
 })
 export class DashboardLayoutComponent implements OnInit {
-  private readonly authService = inject(AuthService);
+  private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
 
   @Input({ required: true }) navigationItems: NavigationItem[] = [];
   @Input() pageTitle: string = '';
   @Output() navigationItemClick = new EventEmitter<NavigationItem>();
 
-  currentUser = this.authService.currentUser;
+  currentUser = this.authFacade.user$;
   dropdownOpen = signal(false);
 
   get userInfo(): UserInfo {
-    const user = this.currentUser();
+    const user = this.authFacade.getCurrentUser();
     return {
       name: user?.nombre || 'Usuario',
       role: user?.role || 'usuario',
@@ -116,7 +116,7 @@ export class DashboardLayoutComponent implements OnInit {
 
   ngOnInit(): void {
     // Verificar autenticación al inicializar
-    if (!this.authService.isAuthenticated()) {
+    if (!this.authFacade.getIsAuthenticated()) {
       this.router.navigate(['/login']);
     }
 
@@ -146,7 +146,7 @@ export class DashboardLayoutComponent implements OnInit {
   }
 
   onLogoClick(): void {
-    const currentUser = this.authService.currentUser();
+    const currentUser = this.authFacade.getCurrentUser();
     if (currentUser) {
       // Usuario autenticado - redirigir al dashboard correspondiente
       const dashboardRoute = this.getDashboardRouteForRole(currentUser.role);
@@ -187,12 +187,12 @@ export class DashboardLayoutComponent implements OnInit {
   }
 
   private viewProfile(): void {
-    const userRole = this.currentUser()?.role?.toLowerCase();
+    const userRole = this.authFacade.getCurrentUser()?.role?.toLowerCase();
     this.router.navigate([`/${userRole}/perfil`]);
   }
 
   private logout(): void {
-    this.authService.logout();
+    this.authFacade.logout();
     this.router.navigate(['/']);
   }
 }

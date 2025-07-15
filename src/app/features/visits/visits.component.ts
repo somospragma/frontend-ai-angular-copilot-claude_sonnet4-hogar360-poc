@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 import { VisitService } from '../../core/services/visit.service';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthFacade } from '../../core/facades/auth.facade';
+import { AlertService } from '../../shared/services/alert.service';
 import { Visit } from '../../core/interfaces';
 
 @Component({
@@ -159,7 +160,9 @@ import { Visit } from '../../core/interfaces';
 })
 export class VisitsComponent implements OnInit {
   private readonly visitService = inject(VisitService);
-  private readonly authService = inject(AuthService);
+  private readonly authFacade = inject(AuthFacade);
+  private readonly alertService = inject(AlertService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
 
   visits = signal<Visit[]>([]);
   loading = signal(false);
@@ -179,12 +182,15 @@ export class VisitsComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    // Configurar AlertService
+    this.alertService.setViewContainerRef(this.viewContainerRef);
+    
     this.loadUserVisits();
   }
 
   private loadUserVisits(): void {
     this.loading.set(true);
-    const currentUser = this.authService.currentUser();
+    const currentUser = this.authFacade.getCurrentUser();
     
     if (currentUser?.correo) {
       this.visitService.getUserVisits(currentUser.correo).subscribe({
@@ -221,16 +227,30 @@ export class VisitsComponent implements OnInit {
     return isUpcomingVisit && canCancel && hoursUntilVisit >= 2;
   }
 
-  cancelVisit(visitId: number): void {
-    if (confirm('¿Estás seguro de que deseas cancelar esta visita?')) {
+  async cancelVisit(visitId: number): Promise<void> {
+    const confirmed = await this.alertService.confirm(
+      'Confirmar cancelación',
+      '¿Estás seguro de que deseas cancelar esta visita?',
+      'Cancelar Visita',
+      'No cancelar'
+    );
+
+    if (confirmed) {
       this.visitService.cancelVisit(visitId).subscribe({
-        next: () => {
+        next: async () => {
           // Actualizar la lista de visitas
           this.loadUserVisits();
+          await this.alertService.success(
+            'Visita cancelada',
+            'La visita ha sido cancelada exitosamente'
+          );
         },
-        error: (error) => {
+        error: async (error) => {
           console.error('Error canceling visit:', error);
-          alert('Error al cancelar la visita. Por favor, inténtelo nuevamente.');
+          await this.alertService.error(
+            'Error al cancelar',
+            'Error al cancelar la visita. Por favor, inténtelo nuevamente.'
+          );
         }
       });
     }

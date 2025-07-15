@@ -1,7 +1,9 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, ViewContainerRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import * as bcrypt from 'bcryptjs';
 import { InputComponent } from '../../shared/components/atoms/input/input.component';
+import { AlertService } from '../../shared/services/alert.service';
 
 interface UsuarioVendedor {
   id?: number;
@@ -89,7 +91,7 @@ interface UsuarioVendedor {
                 formControlName="celular"
                 [required]="true"
                 [maxlength]="13"
-                helperText="Máximo 13 caracteres, puede incluir +"
+                helperText="Máximo 13 caracteres, solo números y símbolo +"
               />
             </div>
 
@@ -122,7 +124,7 @@ interface UsuarioVendedor {
                 placeholder="••••••••"
                 formControlName="clave"
                 [required]="true"
-                helperText="Mínimo 6 caracteres"
+                helperText="Mínimo 8 caracteres, debe incluir: mayúscula, minúscula, número y carácter especial"
               />
             }
 
@@ -169,11 +171,14 @@ interface UsuarioVendedor {
                 @if (vendedorForm.get('celular')?.errors?.['required']) {
                   <li>• El celular es requerido</li>
                 }
-                @if (vendedorForm.get('celular')?.errors?.['maxlength']) {
+                @if (vendedorForm.get('celular')?.errors?.['phoneLength']) {
                   <li>• El celular debe tener máximo 13 caracteres</li>
                 }
-                @if (vendedorForm.get('celular')?.errors?.['pattern']) {
-                  <li>• El formato del celular no es válido</li>
+                @if (vendedorForm.get('celular')?.errors?.['phoneFormat']) {
+                  <li>• El celular solo puede contener números y opcionalmente el símbolo + al inicio</li>
+                }
+                @if (vendedorForm.get('celular')?.errors?.['phoneMinLength']) {
+                  <li>• Si incluye +, debe tener al menos 10 dígitos después</li>
                 }
                 @if (vendedorForm.get('fechaNacimiento')?.errors?.['required']) {
                   <li>• La fecha de nacimiento es requerida</li>
@@ -191,7 +196,19 @@ interface UsuarioVendedor {
                   <li>• La contraseña es requerida</li>
                 }
                 @if (vendedorForm.get('clave')?.errors?.['minlength']) {
-                  <li>• La contraseña debe tener mínimo 6 caracteres</li>
+                  <li>• La contraseña debe tener mínimo 8 caracteres</li>
+                }
+                @if (vendedorForm.get('clave')?.errors?.['uppercase']) {
+                  <li>• Debe incluir al menos una letra mayúscula</li>
+                }
+                @if (vendedorForm.get('clave')?.errors?.['lowercase']) {
+                  <li>• Debe incluir al menos una letra minúscula</li>
+                }
+                @if (vendedorForm.get('clave')?.errors?.['number']) {
+                  <li>• Debe incluir al menos un número</li>
+                }
+                @if (vendedorForm.get('clave')?.errors?.['special']) {
+                  <li>• Debe incluir al menos un carácter especial (!&#64;#$%^&*)</li>
                 }
               </ul>
             </div>
@@ -287,8 +304,10 @@ interface UsuarioVendedor {
     }
   `]
 })
-export class UsuariosVendedoresComponent {
+export class UsuariosVendedoresComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly alertService = inject(AlertService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
   
   showForm = signal(false);
   isSubmitting = signal(false);
@@ -321,14 +340,19 @@ export class UsuariosVendedoresComponent {
   ]);
 
   vendedorForm: FormGroup = this.fb.group({
-    nombre: ['', [Validators.required]],
-    apellido: ['', [Validators.required]],
+    nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+    apellido: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
     documento: ['', [Validators.required, Validators.pattern(/^\d+$/)]],
-    celular: ['', [Validators.required, Validators.maxLength(13), Validators.pattern(/^[+]?[\d\s-()]+$/)]],
+    celular: ['', [Validators.required, this.phoneValidator]],
     fechaNacimiento: ['', [Validators.required, this.ageValidator]],
     correo: ['', [Validators.required, Validators.email]],
-    clave: ['', [Validators.required, Validators.minLength(6)]]
+    clave: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]]
   });
+
+  ngOnInit(): void {
+    // Configure AlertService
+    this.alertService.setViewContainerRef(this.viewContainerRef);
+  }
 
   // Custom validator for age (must be 18 or older)
   ageValidator(control: any) {
@@ -346,6 +370,62 @@ export class UsuariosVendedoresComponent {
     return age < 18 ? { age: true } : null;
   }
 
+  // Custom validator for phone (max 13 characters, can contain +)
+  phoneValidator(control: any) {
+    if (!control.value) return null;
+    
+    const phone = control.value.toString();
+    
+    // Validar longitud máxima de 13 caracteres
+    if (phone.length > 13) {
+      return { phoneLength: true };
+    }
+    
+    // Validar que solo contenga números y opcionalmente el símbolo +
+    // El + solo puede estar al inicio
+    const phonePattern = /^\+?\d+$/;
+    if (!phonePattern.test(phone)) {
+      return { phoneFormat: true };
+    }
+    
+    // Si tiene +, debe tener al menos 10 dígitos después del +
+    if (phone.startsWith('+') && phone.length < 11) {
+      return { phoneMinLength: true };
+    }
+    
+    return null;
+  }
+
+  // Custom validator for password strength
+  passwordValidator(control: any) {
+    if (!control.value) return null;
+    
+    const password = control.value;
+    const errors: any = {};
+    
+    // Al menos una letra mayúscula
+    if (!/[A-Z]/.test(password)) {
+      errors.uppercase = true;
+    }
+    
+    // Al menos una letra minúscula
+    if (!/[a-z]/.test(password)) {
+      errors.lowercase = true;
+    }
+    
+    // Al menos un número
+    if (!/\d/.test(password)) {
+      errors.number = true;
+    }
+    
+    // Al menos un carácter especial
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.special = true;
+    }
+    
+    return Object.keys(errors).length > 0 ? errors : null;
+  }
+
   toggleForm(): void {
     this.showForm.set(!this.showForm());
     if (!this.showForm()) {
@@ -361,12 +441,16 @@ export class UsuariosVendedoresComponent {
     if (this.editingVendedor()) {
       this.vendedorForm.get('clave')?.setValidators([]);
     } else {
-      this.vendedorForm.get('clave')?.setValidators([Validators.required, Validators.minLength(6)]);
+      this.vendedorForm.get('clave')?.setValidators([
+        Validators.required, 
+        Validators.minLength(8), 
+        this.passwordValidator
+      ]);
     }
     this.vendedorForm.get('clave')?.updateValueAndValidity();
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (this.vendedorForm.valid) {
       this.isSubmitting.set(true);
       
@@ -379,7 +463,10 @@ export class UsuariosVendedoresComponent {
       );
       
       if (isDuplicateDoc) {
-        alert('Ya existe un vendedor con ese número de documento.');
+        await this.alertService.error(
+          'Error de validación',
+          'Ya existe un vendedor con ese número de documento.'
+        );
         this.isSubmitting.set(false);
         return;
       }
@@ -391,36 +478,62 @@ export class UsuariosVendedoresComponent {
       );
       
       if (isDuplicateEmail) {
-        alert('Ya existe un vendedor con ese correo electrónico.');
+        await this.alertService.error(
+          'Error de validación',
+          'Ya existe un vendedor con ese correo electrónico.'
+        );
         this.isSubmitting.set(false);
         return;
       }
 
-      setTimeout(() => {
-        if (this.editingVendedor()) {
-          // Update existing vendedor (excluding password)
-          const { clave, ...updateData } = formData;
-          const updatedVendedores = this.vendedores().map(vendedor =>
-            vendedor.id === this.editingVendedor()!.id
-              ? { ...vendedor, ...updateData }
-              : vendedor
+      setTimeout(async () => {
+        try {
+          if (this.editingVendedor()) {
+            // Update existing vendedor (excluding password)
+            const { clave, ...updateData } = formData;
+            const updatedVendedores = this.vendedores().map(vendedor =>
+              vendedor.id === this.editingVendedor()!.id
+                ? { ...vendedor, ...updateData }
+                : vendedor
+            );
+            this.vendedores.set(updatedVendedores);
+            
+            await this.alertService.success(
+              'Éxito',
+              `Vendedor "${updateData.nombre} ${updateData.apellido}" actualizado exitosamente`
+            );
+          } else {
+            // Create new vendedor
+            // Encriptar la contraseña con bcrypt
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(formData.clave, saltRounds);
+            
+            const newVendedor: UsuarioVendedor = {
+              id: Math.max(...this.vendedores().map(v => v.id!)) + 1,
+              ...formData,
+              rol: 'VENDEDOR' as const,
+              fechaCreacion: new Date().toISOString().split('T')[0],
+              clave: hashedPassword // Contraseña encriptada con bcrypt
+            };
+            this.vendedores.set([...this.vendedores(), newVendedor]);
+            
+            await this.alertService.success(
+              'Éxito',
+              `Vendedor "${formData.nombre} ${formData.apellido}" creado exitosamente`
+            );
+          }
+          
+          this.resetForm();
+          this.showForm.set(false);
+        } catch (error) {
+          console.error('Error managing vendedor:', error);
+          await this.alertService.error(
+            'Error',
+            'Error al procesar la información del vendedor. Por favor intenta nuevamente.'
           );
-          this.vendedores.set(updatedVendedores);
-        } else {
-          // Create new vendedor
-          const newVendedor: UsuarioVendedor = {
-            id: Math.max(...this.vendedores().map(v => v.id!)) + 1,
-            ...formData,
-            rol: 'VENDEDOR' as const,
-            fechaCreacion: new Date().toISOString().split('T')[0],
-            clave: 'hashed_' + formData.clave // In real app, this would be properly hashed
-          };
-          this.vendedores.set([...this.vendedores(), newVendedor]);
+        } finally {
+          this.isSubmitting.set(false);
         }
-        
-        this.resetForm();
-        this.showForm.set(false);
-        this.isSubmitting.set(false);
       }, 1000);
     }
   }
@@ -437,10 +550,33 @@ export class UsuariosVendedoresComponent {
     this.showForm.set(true);
   }
 
-  deleteVendedor(id: number): void {
-    if (confirm('¿Estás seguro de que quieres eliminar este vendedor? Esta acción no se puede deshacer.')) {
-      const updatedVendedores = this.vendedores().filter(vendedor => vendedor.id !== id);
-      this.vendedores.set(updatedVendedores);
+  async deleteVendedor(id: number): Promise<void> {
+    const vendedor = this.vendedores().find(v => v.id === id);
+    if (!vendedor) return;
+
+    const confirmed = await this.alertService.confirm(
+      'Confirmar eliminación',
+      `¿Estás seguro de que deseas eliminar al vendedor "${vendedor.nombre} ${vendedor.apellido}"? Esta acción no se puede deshacer.`,
+      'Eliminar',
+      'Cancelar'
+    );
+
+    if (confirmed) {
+      try {
+        const updatedVendedores = this.vendedores().filter(vendedor => vendedor.id !== id);
+        this.vendedores.set(updatedVendedores);
+        
+        await this.alertService.success(
+          'Éxito',
+          `Vendedor "${vendedor.nombre} ${vendedor.apellido}" eliminado exitosamente`
+        );
+      } catch (error) {
+        console.error('Error deleting vendedor:', error);
+        await this.alertService.error(
+          'Error',
+          'Error al eliminar el vendedor. Por favor intenta nuevamente.'
+        );
+      }
     }
   }
 }

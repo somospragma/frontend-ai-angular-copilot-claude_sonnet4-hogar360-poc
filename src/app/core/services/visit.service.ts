@@ -1,14 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, delay, map } from 'rxjs';
 
-import { API_ENDPOINTS } from '../constants/api.constants';
+import { LocalStorageService } from './local-storage.service';
 import { 
   VisitSchedule,
   Visit,
   VisitScheduleRequest,
   VisitRequest,
-  VisitScheduleResponse,
   VisitScheduleSearchParams
 } from '../interfaces/visit.interface';
 
@@ -16,13 +14,28 @@ import {
   providedIn: 'root'
 })
 export class VisitService {
-  private readonly http = inject(HttpClient);
+  private readonly localStorageService = inject(LocalStorageService);
   
   // Signals para el estado reactivo
   readonly visitSchedules = signal<VisitSchedule[]>([]);
   readonly visits = signal<Visit[]>([]);
   readonly loading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  constructor() {
+    // Inicializar con datos del localStorage
+    this.visitSchedules.set(this.localStorageService.getVisitSchedules());
+    this.visits.set(this.localStorageService.getVisits());
+    
+    // Suscribirse a cambios
+    this.localStorageService.visitSchedules$.subscribe(schedules => {
+      this.visitSchedules.set(schedules);
+    });
+    
+    this.localStorageService.visits$.subscribe(visits => {
+      this.visits.set(visits);
+    });
+  }
 
   /**
    * HU #9: Disponibilizar horarios de visitas (solo vendedor)
@@ -32,7 +45,21 @@ export class VisitService {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.post<VisitSchedule>(`${API_ENDPOINTS.VISIT_SCHEDULES}`, schedule);
+    return of(schedule).pipe(
+      delay(300),
+      map(() => {
+        const newSchedule = this.localStorageService.addVisitSchedule(schedule);
+        this.loading.set(false);
+        return newSchedule;
+      })
+    );
+  }
+
+  /**
+   * Alias para createVisitSchedule para compatibilidad
+   */
+  createSchedule(schedule: VisitScheduleRequest): Observable<VisitSchedule> {
+    return this.createVisitSchedule(schedule);
   }
 
   /**
@@ -43,100 +70,214 @@ export class VisitService {
     this.loading.set(true);
     this.error.set(null);
 
-    let params = new HttpParams();
-    
-    if (filters.fechaInicio) params = params.set('fechaInicio', filters.fechaInicio);
-    if (filters.fechaFin) params = params.set('fechaFin', filters.fechaFin);
-    if (filters.ubicacionId) params = params.set('ubicacionId', filters.ubicacionId.toString());
-    if (filters.availableOnly) params = params.set('availableOnly', filters.availableOnly.toString());
-    if (filters.page) params = params.set('page', filters.page.toString());
-    if (filters.limit) params = params.set('limit', filters.limit.toString());
+    return of(null).pipe(
+      delay(200),
+      map(() => {
+        let schedules = this.localStorageService.getVisitSchedules();
+        
+        // Aplicar filtros
+        if (filters.fechaInicio) {
+          schedules = schedules.filter(s => 
+            new Date(s.fechaHoraInicio) >= new Date(filters.fechaInicio!)
+          );
+        }
+        
+        if (filters.fechaFin) {
+          schedules = schedules.filter(s => 
+            new Date(s.fechaHoraFin) <= new Date(filters.fechaFin!)
+          );
+        }
+        
+        if (filters.ubicacionId) {
+          schedules = schedules.filter(s => 
+            s.casa.ubicacion.id === filters.ubicacionId
+          );
+        }
+        
+        if (filters.vendedorId) {
+          schedules = schedules.filter(s => 
+            s.casa.vendedor_id === filters.vendedorId
+          );
+        }
 
-    return this.http.get<VisitSchedule[]>(`${API_ENDPOINTS.VISIT_SCHEDULES}`, { params });
+        this.loading.set(false);
+        return schedules;
+      })
+    );
   }
 
   /**
-   * Obtener un horario específico por ID
+   * Obtener horario por ID
    */
   getScheduleById(id: number): Observable<VisitSchedule> {
-    return this.http.get<VisitSchedule>(`${API_ENDPOINTS.VISIT_SCHEDULES}/${id}`);
+    return of(null).pipe(
+      delay(200),
+      map(() => {
+        const schedule = this.localStorageService.getVisitSchedules().find(s => s.id === id);
+        if (!schedule) {
+          throw new Error('Horario no encontrado');
+        }
+        return schedule;
+      })
+    );
   }
 
   /**
-   * HU #11: Agendar visitas (comprador)
-   * Agenda una visita en un horario disponible
+   * Agendar visita a un horario
    */
   scheduleVisit(visit: VisitRequest): Observable<Visit> {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.post<Visit>(`${API_ENDPOINTS.SCHEDULED_VISITS}`, visit);
+    return of(visit).pipe(
+      delay(300),
+      map(() => {
+        const newVisit = this.localStorageService.addVisit(visit);
+        this.loading.set(false);
+        return newVisit;
+      })
+    );
   }
 
   /**
-   * Obtener horarios del vendedor actual
+   * Obtener horarios del vendedor
    */
-  getVendorSchedules(vendorId: number): Observable<VisitSchedule[]> {
+  getSchedulesByVendor(vendorId: number): Observable<VisitSchedule[]> {
+    return of(null).pipe(
+      delay(200),
+      map(() => {
+        const schedules = this.localStorageService.getVisitSchedules()
+          .filter(s => s.casa.vendedor_id === vendorId);
+        return schedules;
+      })
+    );
+  }
+
+  /**
+   * Obtener mis horarios (para el vendedor actual)
+   */
+  getMySchedules(): Observable<VisitSchedule[]> {
+    // Aquí deberías obtener el ID del vendedor actual del AuthService
+    // Por ahora, devuelvo todos los horarios
+    return of(null).pipe(
+      delay(200),
+      map(() => {
+        const schedules = this.localStorageService.getVisitSchedules();
+        return schedules;
+      })
+    );
+  }
+
+  /**
+   * Obtener visitas por email de comprador
+   */
+  getVisitsByBuyer(email: string): Observable<Visit[]> {
+    return of(null).pipe(
+      delay(200),
+      map(() => {
+        const visits = this.localStorageService.getVisits()
+          .filter(v => v.compradorEmail === email);
+        return visits;
+      })
+    );
+  }
+
+  /**
+   * HU #12: Obtener visitas del usuario
+   */
+  getUserVisits(userEmail: string): Observable<Visit[]> {
     this.loading.set(true);
     this.error.set(null);
 
-    const params = new HttpParams().set('vendedorId', vendorId.toString());
-    return this.http.get<VisitSchedule[]>(`${API_ENDPOINTS.VISIT_SCHEDULES}`, { params });
+    return of(userEmail).pipe(
+      delay(300),
+      map(() => {
+        const visits = this.localStorageService.getVisits();
+        const userVisits = visits.filter(visit => visit.compradorEmail === userEmail);
+        this.loading.set(false);
+        return userVisits;
+      })
+    );
   }
 
   /**
-   * Obtener visitas agendadas del comprador
-   */
-  getUserVisits(email: string): Observable<Visit[]> {
-    this.loading.set(true);
-    this.error.set(null);
-
-    const params = new HttpParams().set('compradorEmail', email);
-    return this.http.get<Visit[]>(`${API_ENDPOINTS.SCHEDULED_VISITS}`, { params });
-  }
-
-  /**
-   * Actualizar horario de visita (solo vendedor propietario)
+   * Actualizar horario de visita
    */
   updateVisitSchedule(id: number, schedule: VisitScheduleRequest): Observable<VisitSchedule> {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.put<VisitSchedule>(`${API_ENDPOINTS.VISIT_SCHEDULES}/${id}`, schedule);
+    return of(schedule).pipe(
+      delay(300),
+      map(() => {
+        const updatedSchedule = this.localStorageService.updateVisitSchedule(id, schedule);
+        this.loading.set(false);
+        return updatedSchedule;
+      })
+    );
   }
 
   /**
-   * Eliminar horario de visita (solo vendedor propietario)
+   * Alias para updateVisitSchedule para compatibilidad
+   */
+  updateSchedule(id: number, schedule: VisitScheduleRequest): Observable<VisitSchedule> {
+    return this.updateVisitSchedule(id, schedule);
+  }
+
+  /**
+   * Eliminar horario de visita
    */
   deleteVisitSchedule(id: number): Observable<void> {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.delete<void>(`${API_ENDPOINTS.VISIT_SCHEDULES}/${id}`);
+    return of(null).pipe(
+      delay(300),
+      map(() => {
+        this.localStorageService.deleteVisitSchedule(id);
+        this.loading.set(false);
+      })
+    );
   }
 
   /**
-   * Cancelar visita agendada
+   * Alias para deleteVisitSchedule para compatibilidad
    */
-  cancelVisit(id: number): Observable<void> {
+  deleteSchedule(id: number): Observable<void> {
+    return this.deleteVisitSchedule(id);
+  }
+
+  /**
+   * Cancelar visita
+   */
+  cancelVisit(visitId: number): Observable<void> {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.patch<void>(`${API_ENDPOINTS.SCHEDULED_VISITS}/${id}/cancel`, {});
+    return of(null).pipe(
+      delay(300),
+      map(() => {
+        this.localStorageService.deleteVisit(visitId);
+        this.loading.set(false);
+      })
+    );
   }
 
   /**
-   * Actualiza el estado local de horarios
+   * Actualizar estado de visita
    */
-  setVisitSchedules(schedules: VisitSchedule[]): void {
-    this.visitSchedules.set(schedules);
-  }
+  updateVisitStatus(visitId: number, status: string): Observable<Visit> {
+    this.loading.set(true);
+    this.error.set(null);
 
-  /**
-   * Actualiza el estado local de visitas agendadas
-   */
-  setVisits(visits: Visit[]): void {
-    this.visits.set(visits);
+    return of({ status } as any).pipe(
+      delay(300),
+      map(() => {
+        const updatedVisit = this.localStorageService.updateVisit(visitId, { status });
+        this.loading.set(false);
+        return updatedVisit;
+      })
+    );
   }
 
   /**

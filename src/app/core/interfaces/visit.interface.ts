@@ -50,6 +50,7 @@ export interface VisitScheduleSearchParams {
   fechaInicio?: string;
   fechaFin?: string;
   ubicacionId?: number;
+  vendedorId?: number;
   availableOnly?: boolean;
   page?: number;
   limit?: number;

@@ -1,3 +1,43 @@
+export interface Ubicacion {
+  id: number;
+  ciudad: string;
+  departamento: string;
+  descripcionCiudad: string;
+  descripcionDepartamento: string;
+  fechaCreacion: Date;
+  activo: boolean;
+}
+
+export interface CreateUbicacionRequest {
+  ciudad: string;
+  departamento: string;
+  descripcionCiudad: string;
+  descripcionDepartamento: string;
+}
+
+export interface UbicacionResponse {
+  success: boolean;
+  message: string;
+  ubicacion?: Ubicacion;
+}
+
+export interface SearchUbicacionParams {
+  texto?: string;
+  ordenAscendente?: boolean;
+  ordenarPor?: 'ciudad' | 'departamento';
+  page?: number;
+  pageSize?: number;
+}
+
+export interface SearchUbicacionResponse {
+  ubicaciones: Ubicacion[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// Legacy interfaces for backward compatibility
 export interface Departamento {
   id: number;
   nombre: string;
@@ -16,14 +56,6 @@ export interface Ciudad {
   fechaActualizacion?: Date;
 }
 
-export interface Ubicacion {
-  id: number;
-  ciudad: Ciudad;
-  departamento: Departamento;
-  ciudadId: number;
-  departamentoId: number;
-}
-
 // Request DTOs
 export interface CreateDepartamentoRequest {
   nombre: string;
@@ -33,11 +65,6 @@ export interface CreateDepartamentoRequest {
 export interface CreateCiudadRequest {
   nombre: string;
   descripcion: string;
-  departamentoId: number;
-}
-
-export interface CreateUbicacionRequest {
-  ciudadId: number;
   departamentoId: number;
 }
 

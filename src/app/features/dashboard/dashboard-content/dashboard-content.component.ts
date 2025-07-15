@@ -2,7 +2,7 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthFacade } from '../../../core/facades/auth.facade';
 import { ButtonComponent } from '../../../shared/components/atoms/button/button.component';
 import { UserRole } from '../../../core/interfaces';
 
@@ -284,13 +284,13 @@ import { UserRole } from '../../../core/interfaces';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardContentComponent {
-  private readonly authService = inject(AuthService);
+  private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
 
-  currentUser = this.authService.currentUser;
+  currentUser = this.authFacade.user$;
 
   navigateToQuickAction(action: string): void {
-    const currentUser = this.authService.currentUser();
+    const currentUser = this.authFacade.getCurrentUser();
     if (!currentUser) {
       console.error('No user found');
       return;
@@ -301,21 +301,21 @@ export class DashboardContentComponent {
 
     switch (action) {
       case 'categories':
-        route = userRole === UserRole.ADMIN ? '/admin/categories' : '/vendedor/categories';
+        route = userRole === UserRole.ADMIN ? '/admin/categorias' : '/vendedor/categorias';
         break;
       case 'locations':
-        route = userRole === UserRole.ADMIN ? '/admin/locations' : '/vendedor/locations';
+        route = userRole === UserRole.ADMIN ? '/admin/ubicaciones' : '/vendedor/ubicaciones';
         break;
       case 'users':
-        route = userRole === UserRole.ADMIN ? '/admin/users' : '/vendedor/profile';
+        route = userRole === UserRole.ADMIN ? '/admin/usuarios-vendedores' : '/vendedor/perfil';
         break;
       case 'properties':
         if (userRole === UserRole.ADMIN) {
-          route = '/admin/properties';
+          route = '/admin/propiedades';
         } else if (userRole === UserRole.VENDEDOR) {
-          route = '/vendedor/properties';
+          route = '/vendedor/propiedades';
         } else {
-          route = '/comprador/properties';
+          route = '/comprador/propiedades';
         }
         break;
       default:
@@ -327,7 +327,7 @@ export class DashboardContentComponent {
   }
 
   getActionTitle(action: string): string {
-    const currentUser = this.authService.currentUser();
+    const currentUser = this.authFacade.getCurrentUser();
     const userRole = currentUser?.role;
 
     switch (action) {
@@ -351,7 +351,7 @@ export class DashboardContentComponent {
   }
 
   getActionDescription(action: string): string {
-    const currentUser = this.authService.currentUser();
+    const currentUser = this.authFacade.getCurrentUser();
     const userRole = currentUser?.role;
 
     switch (action) {

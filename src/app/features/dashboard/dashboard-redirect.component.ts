@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthFacade } from '../../core/facades/auth.facade';
 import { UserRole } from '../../core/interfaces';
 
 @Component({
@@ -23,7 +23,7 @@ import { UserRole } from '../../core/interfaces';
   `]
 })
 export class DashboardRedirectComponent implements OnInit {
-  private readonly authService = inject(AuthService);
+  private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
 
   ngOnInit(): void {
@@ -31,7 +31,7 @@ export class DashboardRedirectComponent implements OnInit {
   }
 
   private redirectToRoleDashboard(): void {
-    const currentUser = this.authService.currentUser();
+    const currentUser = this.authFacade.getCurrentUser();
     
     if (!currentUser) {
       console.warn('No user found, redirecting to login');
