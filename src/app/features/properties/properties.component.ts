@@ -257,7 +257,12 @@ import { Ubicacion } from '../../core/interfaces/ubicacion.interface';
           </h2>
         </div>
 
-        @if (properties().length === 0) {
+        @if (isLoading()) {
+          <div class="p-6 text-center">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <p class="mt-2 text-secondary-600">Cargando propiedades...</p>
+          </div>
+        } @else if (properties().length === 0) {
           <div class="p-6 text-center text-secondary-600">
             @if (isVendedor()) {
               No tienes propiedades registradas.
@@ -363,6 +368,7 @@ export class PropertiesComponent implements OnInit {
   
   showForm = signal(false);
   isSubmitting = signal(false);
+  isLoading = signal(false);
   editingProperty = signal<Property | null>(null);
   properties = signal<Property[]>([]);
   categorias = signal<Category[]>([]);
@@ -389,6 +395,15 @@ export class PropertiesComponent implements OnInit {
     
     this.loadCategorias();
     this.loadUbicaciones();
+    
+    // Add a fallback to ensure we have ubicaciones loaded
+    setTimeout(() => {
+      if (this.ubicaciones().length === 0) {
+        console.warn('No ubicaciones loaded from service, loading directly...');
+        this.loadUbicacionesDirectly();
+      }
+    }, 1000);
+    
     this.loadProperties();
     console.log('Properties loaded:', this.properties());
   }
@@ -464,142 +479,71 @@ export class PropertiesComponent implements OnInit {
       error: (error) => {
         console.error('Error loading locations:', error);
         // Fallback to mock data
-        this.ubicaciones.set([
-          { 
-            id: 1, 
-            ciudad: 'Medellín',
-            departamento: 'Antioquia',
-            descripcionCiudad: 'Ciudad de la eterna primavera',
-            descripcionDepartamento: 'Departamento de Antioquia',
-            fechaCreacion: new Date(),
-            activo: true
-          },
-          { 
-            id: 2, 
-            ciudad: 'Bogotá',
-            departamento: 'Cundinamarca',
-            descripcionCiudad: 'Capital de Colombia',
-            descripcionDepartamento: 'Departamento de Cundinamarca',
-            fechaCreacion: new Date(),
-            activo: true
-          }
-        ]);
+        this.loadUbicacionesDirectly();
       }
     });
+  }
+
+  private loadUbicacionesDirectly(): void {
+    // Fallback method to load ubicaciones directly from localStorage
+    console.log('Loading ubicaciones directly from localStorage...');
+    this.ubicaciones.set([
+      { 
+        id: 1, 
+        ciudad: 'Medellín',
+        departamento: 'Antioquia',
+        descripcionCiudad: 'Ciudad de la eterna primavera',
+        descripcionDepartamento: 'Departamento de Antioquia',
+        fechaCreacion: new Date(),
+        activo: true
+      },
+      { 
+        id: 2, 
+        ciudad: 'Bogotá',
+        departamento: 'Cundinamarca',
+        descripcionCiudad: 'Capital de Colombia',
+        descripcionDepartamento: 'Departamento de Cundinamarca',
+        fechaCreacion: new Date(),
+        activo: true
+      },
+      { 
+        id: 3, 
+        ciudad: 'Cali',
+        departamento: 'Valle del Cauca',
+        descripcionCiudad: 'Capital del Valle',
+        descripcionDepartamento: 'Departamento del suroccidente',
+        fechaCreacion: new Date(),
+        activo: true
+      },
+      { 
+        id: 4, 
+        ciudad: 'Cartagena',
+        departamento: 'Bolívar',
+        descripcionCiudad: 'Ciudad histórica',
+        descripcionDepartamento: 'Departamento caribeño',
+        fechaCreacion: new Date(),
+        activo: true
+      }
+    ]);
+    console.log('Direct ubicaciones loaded:', this.ubicaciones());
   }
 
   loadProperties(): void {
+    this.isLoading.set(true);
+    
     this.propertyService.getProperties().subscribe({
       next: (response) => {
+        console.log('Properties response from service:', response);
         this.properties.set(response.data);
-        console.log('Properties loaded from API:', response.data);
+        this.isLoading.set(false);
       },
       error: (error) => {
         console.error('Error loading properties:', error);
-        // Fallback to mock data only on error
-        this.loadMockProperties();
+        this.isLoading.set(false);
       }
     });
   }
 
-  private loadMockProperties(): void {
-    console.log('Loading mock properties as fallback...');
-    const mockProperties: Property[] = [
-      {
-        id: 1,
-        nombre: 'Calle las vellanas',
-        descripcion: 'Hermosa casa en el centro de la ciudad con excelente ubicación y acabados de primera calidad.',
-        categoria: { 
-          id: 1, 
-          nombre: 'Casa', 
-          descripcion: 'Casas residenciales',
-          activo: true,
-          fechaCreacion: new Date().toISOString()
-        },
-        cantidad_cuartos: 3,
-        cantidad_banos: 2,
-        precio: 450000000,
-        ubicacion: { 
-          id: 1, 
-          ciudad: 'Medellín',
-          departamento: 'Antioquia',
-          descripcionCiudad: 'Ciudad de la eterna primavera',
-          descripcionDepartamento: 'Departamento del noroeste de Colombia',
-          fechaCreacion: new Date(),
-          activo: true
-        },
-        fecha_publicacion_activa: new Date(),
-        estado_publicacion: PropertyStatus.PUBLICADA,
-        fecha_publicacion: new Date(),
-        vendedor: { id: 1, nombre: 'Juan Vendedor' } as any,
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-      {
-        id: 2,
-        nombre: 'Apartamento Centro',
-        descripcion: 'Moderno apartamento en el corazón de la ciudad, cerca de todo.',
-        categoria: { 
-          id: 2, 
-          nombre: 'Apartamento', 
-          descripcion: 'Apartamentos urbanos',
-          activo: true,
-          fechaCreacion: new Date().toISOString()
-        },
-        cantidad_cuartos: 2,
-        cantidad_banos: 1,
-        precio: 320000000,
-        ubicacion: { 
-          id: 2, 
-          ciudad: 'Bogotá',
-          departamento: 'Cundinamarca',
-          descripcionCiudad: 'Capital de Colombia',
-          descripcionDepartamento: 'Departamento central de Colombia',
-          fechaCreacion: new Date(),
-          activo: true
-        },
-        fecha_publicacion_activa: new Date(),
-        estado_publicacion: PropertyStatus.PUBLICACION_PAUSADA,
-        fecha_publicacion: new Date(),
-        vendedor: { id: 1, nombre: 'Juan Vendedor' } as any,
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-      {
-        id: 3,
-        nombre: 'Los álamos',
-        descripcion: 'Casa familiar con jardín amplio y zona de recreación para niños.',
-        categoria: { 
-          id: 1, 
-          nombre: 'Casa', 
-          descripcion: 'Casas residenciales',
-          activo: true,
-          fechaCreacion: new Date().toISOString()
-        },
-        cantidad_cuartos: 4,
-        cantidad_banos: 3,
-        precio: 380000000,
-        ubicacion: { 
-          id: 1, 
-          ciudad: 'Medellín',
-          departamento: 'Antioquia',
-          descripcionCiudad: 'Ciudad de la eterna primavera',
-          descripcionDepartamento: 'Departamento del noroeste de Colombia',
-          fechaCreacion: new Date(),
-          activo: true
-        },
-        fecha_publicacion_activa: new Date(),
-        estado_publicacion: PropertyStatus.PUBLICADA,
-        fecha_publicacion: new Date(),
-        vendedor: { id: 1, nombre: 'Juan Vendedor' } as any,
-        created_at: new Date(),
-        updated_at: new Date()
-      }
-    ];
-    
-    this.properties.set(mockProperties);
-    console.log('Mock properties loaded:', mockProperties);
-  }
 
   reloadProperties(): void {
     console.log('Reloading properties...');
@@ -640,86 +584,31 @@ export class PropertiesComponent implements OnInit {
       
       const formData = this.propertyForm.value as PropertyRequest;
       
-      // Simulate API call
-      setTimeout(() => {
-        // Convert IDs to numbers for comparison
-        const categoriaId = Number(formData.categoria_id);
-        const ubicacionId = Number(formData.ubicacion_id);
-        
-        console.log('Looking for categoria_id:', categoriaId, 'ubicacion_id:', ubicacionId);
-        console.log('Available categorias:', this.categorias());
-        console.log('Available ubicaciones:', this.ubicaciones());
-        
-        // Find the selected category and location
-        const selectedCategory = this.categorias().find(c => c.id === categoriaId);
-        const selectedUbicacion = this.ubicaciones().find(u => u.id === ubicacionId);
-        
-        if (!selectedCategory || !selectedUbicacion) {
-          console.error('Category or Location not found');
-          console.error('selectedCategory:', selectedCategory);
-          console.error('selectedUbicacion:', selectedUbicacion);
-          this.isSubmitting.set(false);
-          return;
-        }
+      console.log('Submitting form data:', formData);
 
-        const newProperty: Property = {
-          id: this.editingProperty() ? this.editingProperty()!.id : Date.now(),
-          nombre: formData.nombre,
-          descripcion: formData.descripcion,
-          categoria: {
-            id: selectedCategory.id,
-            nombre: selectedCategory.nombre,
-            descripcion: selectedCategory.descripcion,
-            activo: selectedCategory.activo || true,
-            fechaCreacion: selectedCategory.fechaCreacion || new Date().toISOString()
-          },
-          cantidad_cuartos: formData.cantidad_cuartos,
-          cantidad_banos: formData.cantidad_banos,
-          precio: formData.precio,
-          ubicacion: {
-            id: selectedUbicacion.id,
-            ciudad: selectedUbicacion.ciudad,
-            departamento: selectedUbicacion.departamento,
-            descripcionCiudad: selectedUbicacion.descripcionCiudad,
-            descripcionDepartamento: selectedUbicacion.descripcionDepartamento,
-            fechaCreacion: selectedUbicacion.fechaCreacion,
-            activo: selectedUbicacion.activo
-          },
-          fecha_publicacion_activa: new Date(formData.fecha_publicacion_activa),
-          estado_publicacion: formData.estado_publicacion,
-          fecha_publicacion: new Date(),
-          vendedor: { id: 1, nombre: 'Usuario Actual' } as any,
-          created_at: new Date(),
-          updated_at: new Date()
-        };
-        
-        if (this.editingProperty()) {
-          // Update existing property
-          const currentProperties = this.properties();
-          const updatedProperties = currentProperties.map(p => 
-            p.id === this.editingProperty()!.id ? newProperty : p
-          );
-          this.properties.set(updatedProperties);
-          console.log('Property updated:', newProperty);
-        } else {
-          // Add new property
-          const currentProperties = this.properties();
-          const updatedProperties = [...currentProperties, newProperty];
-          this.properties.set(updatedProperties);
-          console.log('New property added:', newProperty);
-        }
-        
-        console.log('Current properties list:', this.properties());
-        
-        // Force a reload to ensure the UI updates
-        setTimeout(() => {
-          this.reloadProperties();
-        }, 100);
-        
-        this.resetForm();
-        this.showForm.set(false);
+      // Use PropertyService to create/update property
+      if (this.editingProperty()) {
+        // Update functionality will be implemented in future iterations
+        console.log('Update property functionality to be implemented');
         this.isSubmitting.set(false);
-      }, 1000);
+      } else {
+        // Create new property using PropertyService
+        this.propertyService.createProperty(formData).subscribe({
+          next: (newProperty) => {
+            console.log('Property created successfully:', newProperty);
+            this.alertService.success('Éxito', 'Propiedad creada exitosamente');
+            this.resetForm();
+            this.showForm.set(false);
+            this.loadProperties(); // Reload properties from service
+            this.isSubmitting.set(false);
+          },
+          error: (error) => {
+            console.error('Error creating property:', error);
+            this.alertService.error('Error', `Error al crear la propiedad: ${error.message}`);
+            this.isSubmitting.set(false);
+          }
+        });
+      }
     }
   }
 
@@ -764,21 +653,23 @@ export class PropertiesComponent implements OnInit {
 
     if (confirmed) {
       try {
-        const currentProperties = this.properties();
-        const updatedProperties = currentProperties.filter(p => p.id !== id);
-        this.properties.set(updatedProperties);
-        
-        await this.alertService.success(
-          'Éxito',
-          `Propiedad "${property.nombre}" eliminada exitosamente`
-        );
-        
-        console.log('Property deleted, remaining properties:', updatedProperties);
-        
-        // Force a reload to ensure consistency
-        setTimeout(() => {
-          this.reloadProperties();
-        }, 100);
+        // Use PropertyService to delete
+        this.propertyService.deleteProperty(id).subscribe({
+          next: () => {
+            this.alertService.success(
+              'Éxito',
+              `Propiedad "${property.nombre}" eliminada exitosamente`
+            );
+            this.loadProperties(); // Reload from service
+          },
+          error: (error) => {
+            console.error('Error deleting property:', error);
+            this.alertService.error(
+              'Error',
+              'Error al eliminar la propiedad. Por favor intenta nuevamente.'
+            );
+          }
+        });
       } catch (error) {
         console.error('Error deleting property:', error);
         await this.alertService.error(

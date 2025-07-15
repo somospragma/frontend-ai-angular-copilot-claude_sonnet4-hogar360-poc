@@ -15,12 +15,12 @@ export class LocalStorageService {
   };
 
   // Subjects para notificar cambios
-  private categoriesSubject = new BehaviorSubject<any[]>(this.getCategories());
-  private ubicacionesSubject = new BehaviorSubject<any[]>(this.getUbicaciones());
-  private propertiesSubject = new BehaviorSubject<any[]>(this.getProperties());
-  private usuariosSubject = new BehaviorSubject<any[]>(this.getUsuarios());
-  private visitSchedulesSubject = new BehaviorSubject<any[]>(this.getVisitSchedules());
-  private visitsSubject = new BehaviorSubject<any[]>(this.getVisits());
+  private readonly categoriesSubject = new BehaviorSubject<any[]>(this.getCategories());
+  private readonly ubicacionesSubject = new BehaviorSubject<any[]>(this.getUbicaciones());
+  private readonly propertiesSubject = new BehaviorSubject<any[]>(this.getProperties());
+  private readonly usuariosSubject = new BehaviorSubject<any[]>(this.getUsuarios());
+  private readonly visitSchedulesSubject = new BehaviorSubject<any[]>(this.getVisitSchedules());
+  private readonly visitsSubject = new BehaviorSubject<any[]>(this.getVisits());
 
   constructor() {
     this.initializeDefaultData();
@@ -159,7 +159,7 @@ export class LocalStorageService {
     return this.getFromStorage(this.storageKeys.properties) || [];
   }
 
-  getPropertyById(id: number): any | undefined {
+  getPropertyById(id: number): any {
     const properties = this.getProperties();
     return properties.find(p => p.id === id);
   }
@@ -169,16 +169,60 @@ export class LocalStorageService {
     this.propertiesSubject.next(properties);
   }
 
-  addProperty(property: any): any {
+  addProperty(propertyRequest: any): any {
     const properties = this.getProperties();
+    const categories = this.getCategories();
+    const ubicaciones = this.getUbicaciones();
+    
+    // Buscar la categoría completa
+    const categoria = categories.find(c => Number(c.id) === Number(propertyRequest.categoria_id));
+    if (!categoria) {
+      throw new Error('Categoría no encontrada');
+    }
+    
+    // Buscar la ubicación completa
+    const ubicacion = ubicaciones.find(u => Number(u.id) === Number(propertyRequest.ubicacion_id));
+    if (!ubicacion) {
+      throw new Error('Ubicación no encontrada');
+    }
+    
+    // Crear la propiedad completa con objetos anidados
     const newProperty = {
-      ...property,
       id: Date.now(), // Generar ID único
+      nombre: propertyRequest.nombre,
+      descripcion: propertyRequest.descripcion,
+      categoria: {
+        id: categoria.id,
+        nombre: categoria.nombre,
+        descripcion: categoria.descripcion,
+        activo: categoria.activo,
+        fechaCreacion: categoria.fechaCreacion
+      },
+      cantidad_cuartos: propertyRequest.cantidad_cuartos,
+      cantidad_banos: propertyRequest.cantidad_banos,
+      precio: propertyRequest.precio,
+      ubicacion: {
+        id: ubicacion.id,
+        ciudad: ubicacion.ciudad,
+        departamento: ubicacion.departamento,
+        descripcionCiudad: ubicacion.descripcionCiudad,
+        descripcionDepartamento: ubicacion.descripcionDepartamento,
+        fechaCreacion: ubicacion.fechaCreacion,
+        activo: ubicacion.activo
+      },
+      fecha_publicacion_activa: new Date(propertyRequest.fecha_publicacion_activa),
+      estado_publicacion: propertyRequest.estado_publicacion,
+      fecha_publicacion: new Date(),
+      vendedor: { id: 1, nombre: 'Usuario Actual' }, // Se obtiene del contexto real de autenticación
+      created_at: new Date(),
+      updated_at: new Date(),
       fechaCreacion: new Date(),
       activo: true
     };
+    
     properties.push(newProperty);
     this.saveProperties(properties);
+    this.propertiesSubject.next(properties);
     return newProperty;
   }
 
@@ -248,11 +292,24 @@ export class LocalStorageService {
 
   addVisitSchedule(schedule: any): any {
     const schedules = this.getVisitSchedules();
+    const properties = this.getProperties();
+    // Buscar la propiedad completa
+    const casaObj = properties.find(p => Number(p.id) === Number(schedule.casaId));
+    if (!casaObj) {
+      throw new Error('Propiedad no encontrada para crear horario');
+    }
     const newSchedule = {
-      ...schedule,
       id: Date.now(),
+      vendedorId: schedule.vendedorId,
+      casaId: schedule.casaId,
+      fechaHoraInicio: schedule.fechaHoraInicio,
+      fechaHoraFin: schedule.fechaHoraFin,
+      espaciosDisponibles: schedule.espaciosDisponibles ?? 1,
+      vendedor: { id: schedule.vendedorId, nombre: 'Usuario Actual' }, // placeholder
+      casa: casaObj,
+      visitasAgendadas: [] as any[],
       fechaCreacion: new Date(),
-      visitasAgendadas: []
+      fechaActualizacion: new Date()
     };
     schedules.push(newSchedule);
     this.saveVisitSchedules(schedules);
