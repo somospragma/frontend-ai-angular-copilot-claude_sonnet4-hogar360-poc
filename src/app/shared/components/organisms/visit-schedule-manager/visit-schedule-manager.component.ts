@@ -15,24 +15,28 @@ import { VisitSchedule, VisitScheduleRequest } from '../../../../core/interfaces
     VisitScheduleListComponent
   ],
   template: `
-    <div class="space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Formulario -->
-      <app-visit-schedule-form
-        [properties]="properties"
-        [editingSchedule]="editingSchedule"
-        [isSubmitting]="isSubmitting"
-        [minDateTime]="minDateTime"
-        [maxDateTime]="maxDateTime"
-        (scheduleSubmit)="onScheduleSubmit($event)"
-        (formReset)="onFormReset()"
-      />
+      <div class="lg:order-1">
+        <app-visit-schedule-form
+          [properties]="properties"
+          [editingSchedule]="editingSchedule"
+          [isSubmitting]="isSubmitting"
+          [minDateTime]="minDateTime"
+          [maxDateTime]="maxDateTime"
+          (scheduleSubmit)="onScheduleSubmit($event)"
+          (formReset)="onFormReset()"
+        />
+      </div>
 
       <!-- Lista de Horarios -->
-      <app-visit-schedule-list
-        [schedules]="schedules"
-        (edit)="onEditSchedule($event)"
-        (delete)="onDeleteSchedule($event)"
-      />
+      <div class="lg:order-2">
+        <app-visit-schedule-list
+          [schedules]="schedules"
+          (edit)="onEditSchedule($event)"
+          (delete)="onDeleteSchedule($event)"
+        />
+      </div>
     </div>
   `
 })

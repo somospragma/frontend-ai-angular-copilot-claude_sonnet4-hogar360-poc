@@ -448,29 +448,37 @@ export class LocalStorageService {
           id: '1', 
           ciudad: 'Medellín', 
           departamento: 'Antioquia',
-          descripcion_ciudad: 'Ciudad de la eterna primavera',
-          descripcion_departamento: 'Departamento industrial y comercial'
+          descripcionCiudad: 'Ciudad de la eterna primavera',
+          descripcionDepartamento: 'Departamento industrial y comercial',
+          fechaCreacion: new Date(),
+          activo: true
         },
         { 
           id: '2', 
           ciudad: 'Bogotá', 
           departamento: 'Cundinamarca',
-          descripcion_ciudad: 'Capital de Colombia',
-          descripcion_departamento: 'Departamento central administrativo'
+          descripcionCiudad: 'Capital de Colombia',
+          descripcionDepartamento: 'Departamento central administrativo',
+          fechaCreacion: new Date(),
+          activo: true
         },
         { 
           id: '3', 
           ciudad: 'Cali', 
           departamento: 'Valle del Cauca',
-          descripcion_ciudad: 'Capital del Valle del Cauca',
-          descripcion_departamento: 'Departamento del suroccidente'
+          descripcionCiudad: 'Capital del Valle del Cauca',
+          descripcionDepartamento: 'Departamento del suroccidente',
+          fechaCreacion: new Date(),
+          activo: true
         },
         { 
           id: '4', 
           ciudad: 'Cartagena', 
           departamento: 'Bolívar',
-          descripcion_ciudad: 'Ciudad histórica y turística',
-          descripcion_departamento: 'Departamento caribeño'
+          descripcionCiudad: 'Ciudad histórica y turística',
+          descripcionDepartamento: 'Departamento caribeño',
+          fechaCreacion: new Date(),
+          activo: true
         }
       ];
       this.saveUbicaciones(defaultUbicaciones);
@@ -522,8 +530,8 @@ export class LocalStorageService {
             id: 1, 
             ciudad: 'Medellín', 
             departamento: 'Antioquia',
-            descripcion_ciudad: 'Ciudad de la eterna primavera',
-            descripcion_departamento: 'Departamento industrial y comercial'
+            descripcionCiudad: 'Ciudad de la eterna primavera',
+            descripcionDepartamento: 'Departamento industrial y comercial'
           },
           fecha_publicacion_activa: new Date().toISOString(),
           estado_publicacion: 'PUBLICADA',
@@ -544,8 +552,8 @@ export class LocalStorageService {
             id: 2, 
             ciudad: 'Bogotá', 
             departamento: 'Cundinamarca',
-            descripcion_ciudad: 'Capital de Colombia',
-            descripcion_departamento: 'Departamento central administrativo'
+            descripcionCiudad: 'Capital de Colombia',
+            descripcionDepartamento: 'Departamento central administrativo'
           },
           fecha_publicacion_activa: new Date().toISOString(),
           estado_publicacion: 'PUBLICADA',
