@@ -20,7 +20,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
     title: 'Iniciar Sesión - Hogar360'
   },
-  
+
   // Public routes with layout
   {
     path: '',
@@ -40,7 +40,7 @@ export const routes: Routes = [
       }
     ]
   },
-  
+
   // Protected routes - Dashboard redirects to role-based dashboard
   {
     path: 'dashboard',
@@ -48,7 +48,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard-redirect.component').then(m => m.DashboardRedirectComponent),
     title: 'Redirigiendo... - Hogar360'
   },
-  
+
   // Admin routes - HU #1, #3, #5, #8 with unified layout
   {
     path: 'admin',
@@ -102,7 +102,7 @@ export const routes: Routes = [
       }
     ]
   },
-  
+
   // Seller routes - HU #6, #9 with unified layout
   {
     path: 'vendedor',
@@ -151,7 +151,7 @@ export const routes: Routes = [
       }
     ]
   },
-  
+
   // Buyer routes - HU #11 with unified layout
   {
     path: 'comprador',
@@ -183,10 +183,16 @@ export const routes: Routes = [
         title: 'Mis Visitas Agendadas - Hogar360'
       },
       {
+        path: 'horarios-visitas',
+        loadComponent: () => import('./features/visit-schedules-listing/visit-schedules-listing.component').then(m => m.VisitSchedulesListingComponent),
+        title: 'Horarios de Visitas - Hogar360'
+      },
+      {
         path: 'agendar-visita',
         loadComponent: () => import('./features/schedule-visit/schedule-visit.component').then(m => m.ScheduleVisitComponent),
         title: 'Agendar Visita - Hogar360'
       },
+
       {
         path: '',
         redirectTo: 'dashboard',
@@ -194,7 +200,7 @@ export const routes: Routes = [
       }
     ]
   },
-  
+
   // Catch all route
   {
     path: '**',

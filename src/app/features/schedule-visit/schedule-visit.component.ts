@@ -205,7 +205,7 @@ export class ScheduleVisitComponent implements OnInit {
       this.successMessage.set('');
 
       const visitRequest: VisitRequest = {
-        horarioDisponibleId: this.selectedSchedule()!.id,
+        horarioDisponible: this.selectedSchedule()!,
         compradorEmail: this.visitForm.value.compradorEmail,
         comentarios: this.visitForm.value.comentarios
       };

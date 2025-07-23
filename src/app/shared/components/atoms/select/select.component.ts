@@ -144,7 +144,6 @@ export class SelectComponent implements ControlValueAccessor {
     const disabledClasses = this.disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : '';
     
     const finalClasses = [baseClasses, errorClasses, disabledClasses].filter(Boolean).join(' ');
-    console.log('Select classes:', finalClasses); // Debug log
     return finalClasses;
   }
 }

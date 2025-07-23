@@ -80,11 +80,9 @@ export class AuthService {
     
     // Use mock service in development mode
     if (DEVELOPMENT_MODE) {
-      console.log('🔐 AuthService: Using mock authentication');
       return this.mockAuthService.login(credentials)
         .pipe(
           tap(loginResponse => {
-            console.log('🔐 AuthService: Mock login successful:', loginResponse.user);
             this.setAuthData(loginResponse);
             this.navigateAfterLogin(loginResponse.user.role);
           }),

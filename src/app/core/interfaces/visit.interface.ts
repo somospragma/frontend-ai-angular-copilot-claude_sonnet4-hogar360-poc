@@ -34,8 +34,8 @@ export interface VisitScheduleRequest {
 }
 
 export interface VisitRequest {
-  horarioDisponibleId: number;
   compradorEmail: string;
+  horarioDisponible?: VisitSchedule;
   comentarios?: string;
 }
 

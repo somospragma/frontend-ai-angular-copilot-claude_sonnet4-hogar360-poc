@@ -61,14 +61,11 @@ export class UnifiedLayoutComponent implements OnInit {
         const svg = await firstValueFrom(this.http.get(`/assets/images/${file}`, { responseType: 'text' }));
         if (svg) {
           this.svgCache.set(file, svg);
-          console.log(`✅ Loaded SVG: ${file}`);
         }
       } catch (error) {
         console.warn(`❌ Failed to load SVG: ${file}`, error);
       }
     }
-    
-    console.log('🎨 SVG cache:', this.svgCache);
   }
 
   private getSvgIcon(filename: string): string {
@@ -77,7 +74,6 @@ export class UnifiedLayoutComponent implements OnInit {
       console.warn(`SVG not found in cache: ${filename}`);
       return '';
     }
-    console.log(`🎯 Getting SVG for ${filename}:`, svg.substring(0, 100) + '...');
     return svg;
   }
 
@@ -223,17 +219,15 @@ export class UnifiedLayoutComponent implements OnInit {
             isActive: this.isActiveRoute('/comprador/visitas')
           },
           {
-            id: 'agendar',
-            label: 'Agendar Visita',
-            route: '/comprador/agendar-visita',
+            id: 'horarios',
+            label: 'Horarios de Visitas',
+            route: '/comprador/horarios-visitas',
             icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12,6 12,12 16,14"/>
             </svg>`,
-            isActive: this.isActiveRoute('/comprador/agendar-visita')
-          }
+            isActive: this.isActiveRoute('/comprador/horarios-visitas')
+          },
         ];
         break;
 
