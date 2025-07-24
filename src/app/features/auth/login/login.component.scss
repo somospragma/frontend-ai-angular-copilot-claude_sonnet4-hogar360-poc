@@ -1,0 +1,175 @@
+.login-page {
+  @apply min-h-screen bg-neutral-50 flex items-center justify-center p-4;
+}
+
+.login-container {
+  @apply w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center;
+}
+
+.brand-section {
+  @apply hidden lg:flex lg:justify-center;
+}
+
+.brand-content {
+  @apply max-w-md space-y-6;
+}
+
+.brand-title {
+  @apply text-3xl font-semibold text-neutral-900 mt-6;
+}
+
+.brand-subtitle {
+  @apply text-neutral-600 leading-relaxed;
+}
+
+.features-list {
+  @apply space-y-3;
+}
+
+.feature-item {
+  @apply flex items-center gap-3 text-neutral-700;
+
+  svg {
+    @apply text-primary-500;
+  }
+}
+
+.form-section {
+  @apply flex justify-center;
+}
+
+.form-container {
+  @apply w-full max-w-md card p-8;
+}
+
+.form-header {
+  @apply text-center mb-8;
+}
+
+.form-title {
+  @apply text-2xl font-semibold text-neutral-900 mb-2;
+}
+
+.form-subtitle {
+  @apply text-neutral-600;
+}
+
+.login-form {
+  @apply space-y-6;
+}
+
+.form-options {
+  @apply text-right;
+}
+
+.forgot-link {
+  @apply text-sm text-primary-500 hover:text-primary-600 transition-colors;
+}
+
+.submit-button {
+  @apply w-full;
+}
+
+.error-alert {
+  @apply flex items-center gap-2 p-3 bg-danger-50 border border-danger-200 rounded-lg text-danger-700 text-sm;
+}
+
+.form-footer {
+  @apply text-center mt-6 pt-6 border-t border-neutral-200;
+}
+
+.footer-text {
+  @apply text-sm text-neutral-600;
+}
+
+.footer-link {
+  @apply text-primary-500 hover:text-primary-600 transition-colors font-medium;
+}
+
+.demo-section {
+  @apply mt-6 pt-6 border-t border-neutral-200;
+}
+
+.demo-toggle {
+  @apply bg-neutral-50 rounded-lg p-4;
+}
+
+.demo-summary {
+  @apply text-sm font-medium text-neutral-600 cursor-pointer hover:text-primary-600 transition-colors mb-3;
+}
+
+.demo-content {
+  @apply space-y-3 mt-3;
+}
+
+.demo-item {
+  @apply bg-white rounded-lg p-3 border border-neutral-200;
+}
+
+.demo-role {
+  @apply flex justify-between items-center mb-2;
+}
+
+.demo-buttons {
+  @apply flex gap-2;
+}
+
+.demo-fill-btn,
+.demo-copy-btn {
+  @apply px-3 py-1 text-white text-xs rounded-md transition-colors;
+}
+
+.demo-fill-btn {
+  @apply bg-primary-500 hover:bg-primary-600;
+}
+
+.demo-copy-btn {
+  @apply bg-neutral-500 hover:bg-neutral-600;
+}
+
+.demo-credentials {
+  @apply text-sm text-neutral-600 font-mono;
+}
+
+.demo-email {
+  @apply text-primary-600;
+}
+
+.demo-separator {
+  @apply mx-2 text-neutral-400;
+}
+
+.demo-password {
+  @apply text-secondary-600;
+}
+
+.copy-message {
+  @apply text-xs p-2 rounded-md text-center min-h-[2rem] flex items-center justify-center;
+  
+  &.visible {
+    @apply text-success-600 bg-success-50;
+  }
+  
+  &.hidden {
+    @apply text-transparent;
+  }
+}
+
+// Responsive styles
+@media (max-width: 1024px) {
+  .login-container {
+    @apply grid-cols-1;
+  }
+  .form-container {
+    @apply max-w-sm;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-page {
+    @apply p-2;
+  }
+  .form-container {
+    @apply p-6;
+  }
+}

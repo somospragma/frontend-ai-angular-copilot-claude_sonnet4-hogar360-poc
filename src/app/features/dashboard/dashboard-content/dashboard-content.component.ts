@@ -170,34 +170,22 @@ import { UserRole } from '../../../core/interfaces';
       @apply space-y-8;
     }
 
-    /* Stats Grid */
     .stats-grid {
       @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
     }
 
     .stat-card {
-      @apply bg-white rounded-xl p-6 border border-neutral-200 flex items-center gap-4 hover:shadow-lg transition-shadow;
+      @apply card flex items-center gap-4 card-hover;
     }
 
     .stat-icon {
       @apply w-12 h-12 rounded-lg flex items-center justify-center;
     }
 
-    .stat-icon.primary {
-      @apply bg-primary-100 text-primary-600;
-    }
-
-    .stat-icon.success {
-      @apply bg-success-100 text-success-600;
-    }
-
-    .stat-icon.warning {
-      @apply bg-warning-100 text-warning-600;
-    }
-
-    .stat-icon.danger {
-      @apply bg-danger-100 text-danger-600;
-    }
+    .stat-icon.primary { @apply bg-primary-100 text-primary-600; }
+    .stat-icon.success { @apply bg-success-100 text-success-600; }
+    .stat-icon.warning { @apply bg-warning-100 text-warning-600; }
+    .stat-icon.danger { @apply bg-danger-100 text-danger-600; }
 
     .stat-value {
       @apply text-2xl font-semibold text-neutral-900;
@@ -207,17 +195,8 @@ import { UserRole } from '../../../core/interfaces';
       @apply text-neutral-600 text-sm;
     }
 
-    /* Activity Section */
-    .activity-section {
-      @apply bg-white rounded-xl border border-neutral-200 p-6;
-    }
-
-    .section-header {
-      @apply flex justify-between items-center mb-6;
-    }
-
-    .section-title {
-      @apply text-lg font-semibold text-neutral-900;
+    .activity-section, .quick-actions {
+      @apply card;
     }
 
     .activity-list {
@@ -240,11 +219,6 @@ import { UserRole } from '../../../core/interfaces';
       @apply text-sm text-neutral-500;
     }
 
-    /* Quick Actions */
-    .quick-actions {
-      @apply bg-white rounded-xl border border-neutral-200 p-6;
-    }
-
     .actions-grid {
       @apply grid grid-cols-1 md:grid-cols-3 gap-4;
     }
@@ -257,11 +231,6 @@ import { UserRole } from '../../../core/interfaces';
       @apply w-10 h-10 bg-primary-100 text-primary-600 rounded-lg flex items-center justify-center mb-3;
     }
 
-    .action-icon svg {
-      @apply w-5 h-5 text-primary-600;
-      color: #2563eb; /* Fallback color */
-    }
-
     .action-title {
       @apply font-medium text-neutral-900 mb-1;
     }
@@ -270,13 +239,8 @@ import { UserRole } from '../../../core/interfaces';
       @apply text-sm text-neutral-600;
     }
 
-    /* Mobile Responsive */
     @media (max-width: 768px) {
-      .stats-grid {
-        @apply grid-cols-1;
-      }
-
-      .actions-grid {
+      .stats-grid, .actions-grid {
         @apply grid-cols-1;
       }
     }

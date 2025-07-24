@@ -207,3 +207,38 @@ select {
   background-size: 1.5em 1.5em !important;
   padding-right: 2.5rem !important;
 }
+
+/* Common component utilities */
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border border-neutral-200 p-6;
+  }
+  
+  .card-hover {
+    @apply hover:shadow-lg transition-shadow;
+  }
+  
+  .section-header {
+    @apply flex justify-between items-center mb-6;
+  }
+  
+  .section-title {
+    @apply text-lg font-semibold text-neutral-900;
+  }
+  
+  .form-group {
+    @apply space-y-2;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-neutral-700;
+  }
+  
+  .error-message {
+    @apply text-sm text-danger-500;
+  }
+  
+  .loading-spinner {
+    @apply inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin;
+  }
+}
